@@ -1,0 +1,8 @@
+[
+  {"id":1,"operator_name":"Acme Gaming","jurisdictional_name":"UK","min_spin_time":2.5},
+  {"id":2,"operator_name":"Acme Gaming","jurisdictional_name":"Malta","min_spin_time":0},
+  {"id":3,"operator_name":"Northstar Play","jurisdictional_name":"UK","min_spin_time":2.5},
+  {"id":4,"operator_name":"Northstar Play","jurisdictional_name":"New Jersey","min_spin_time":1},
+  {"id":5,"operator_name":"Bluefin Casino","jurisdictional_name":"Ontario","min_spin_time":0},
+  {"id":6,"operator_name":"Bluefin Casino","jurisdictional_name":"Sweden","min_spin_time":3}
+]

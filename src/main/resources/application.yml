@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: templated-data-service
+  datasource:
+    url: jdbc:sqlite:./data/tds.db
+    hikari:
+      maximum-pool-size: 4   # SQLite pragmas are applied in DataSourceConfig
+  flyway:
+    locations: classpath:db/migration/{vendor}
+  jackson:
+    default-property-inclusion: non_null
+  mvc:
+    problemdetails:
+      enabled: true
+  web:
+    resources:
+      add-mappings: false   # SpaResourceConfig serves static files (ADR-0009)
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+
+tds:
+  paths:
+    templates: ./templates
+    scripts: ./scripts
+    output: ./data/action-output
+  seed:
+    import-on-start: true
+    auto-publish: false
+    sample-data: false     # dev: fill empty tables from templates/sample-data/*.json
+  scripts:
+    watch: true
+    max-concurrent: 8
+    default-timeout-ms: 3000
+  security:
+    bootstrap-admin: admin
+
+logging:
+  level:
+    com.lnw.tds: INFO

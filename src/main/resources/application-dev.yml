@@ -1,0 +1,8 @@
+tds:
+  seed:
+    auto-publish: true
+    sample-data: true
+
+logging:
+  level:
+    com.lnw.tds: DEBUG

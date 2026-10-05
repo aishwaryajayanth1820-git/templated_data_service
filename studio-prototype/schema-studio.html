@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TDS Schema Studio</title>
+<style>
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --panel-2: #f0f2f5; --border: #dfe3e8; --border-strong: #c5ccd5;
+  --text: #1c2430; --muted: #66707d; --accent: #2f6fde; --accent-weak: #e6eefc; --accent-text: #ffffff;
+  --danger: #c93a3a; --danger-weak: #fbeaea; --warn: #a86400; --warn-weak: #fdf2e0; --ok: #23824a; --ok-weak: #e4f4ea;
+  --code-bg: #f3f5f8; --shadow: 0 8px 28px rgba(20, 30, 50, .18);
+  --c-grey: #6b7280; --c-red: #c93a3a; --c-orange: #c2610f; --c-yellow: #9a7b00; --c-green: #23824a; --c-blue: #2f6fde; --c-purple: #7c4dcc;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c; --panel: #1a1f27; --panel-2: #222833; --border: #2e3642; --border-strong: #404a58;
+    --text: #e3e8ef; --muted: #98a2b0; --accent: #6b9bf2; --accent-weak: #22324d; --accent-text: #0d1320;
+    --danger: #f07b7b; --danger-weak: #3a2224; --warn: #e9b056; --warn-weak: #3a2f1c; --ok: #5fcf8c; --ok-weak: #1d3527;
+    --code-bg: #151a21; --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+    --c-grey: #9aa3af; --c-red: #f07b7b; --c-orange: #f0a35e; --c-yellow: #e0c45c; --c-green: #5fcf8c; --c-blue: #6b9bf2; --c-purple: #b394f0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161c; --panel: #1a1f27; --panel-2: #222833; --border: #2e3642; --border-strong: #404a58;
+  --text: #e3e8ef; --muted: #98a2b0; --accent: #6b9bf2; --accent-weak: #22324d; --accent-text: #0d1320;
+  --danger: #f07b7b; --danger-weak: #3a2224; --warn: #e9b056; --warn-weak: #3a2f1c; --ok: #5fcf8c; --ok-weak: #1d3527;
+  --code-bg: #151a21; --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+  --c-grey: #9aa3af; --c-red: #f07b7b; --c-orange: #f0a35e; --c-yellow: #e0c45c; --c-green: #5fcf8c; --c-blue: #6b9bf2; --c-purple: #b394f0;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 13.5px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+code, pre, textarea.code, .mono { font-variant-ligatures: none; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; }
+button { font: inherit; }
+.app { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+.topbar { display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); }
+.brand { font-weight: 650; letter-spacing: .2px; }
+.brand span { color: var(--muted); font-weight: 450; }
+.topnav { display: flex; gap: 4px; margin-left: 12px; }
+.topnav button { background: none; border: 0; color: var(--muted); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.topnav button.on { color: var(--text); background: var(--panel-2); }
+.topnav button:disabled { opacity: .5; cursor: default; }
+.spacer { flex: 1; }
+.body { display: grid; grid-template-columns: 250px 1fr; min-height: 0; }
+.sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.side-head { display: flex; gap: 6px; padding: 12px; border-bottom: 1px solid var(--border); }
+.tlist { overflow: auto; padding: 6px; }
+.titem { display: block; width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--text); margin-bottom: 2px; }
+.titem:hover { background: var(--panel-2); }
+.titem.on { background: var(--accent-weak); border-color: var(--accent); }
+.titem .row1 { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.titem .row2 { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.pub { background: var(--ok); } .dot.chg { background: var(--warn); } .dot.draft { background: var(--muted); }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.thead { padding: 14px 20px 0; background: var(--panel); border-bottom: 1px solid var(--border); }
+.thead-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.thead h1 { font-size: 19px; margin: 0; font-weight: 650; }
+.thead .sub { color: var(--muted); margin: 2px 0 10px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: 8px; }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.tabs button.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs .cnt { margin-left: 5px; font-size: 11px; background: var(--panel-2); border-radius: 9px; padding: 0 6px; color: var(--muted); }
+.content { flex: 1; overflow: auto; padding: 16px 20px 24px; min-height: 0; }
+.btn { background: var(--panel); color: var(--text); border: 1px solid var(--border-strong); border-radius: 7px; padding: 5px 11px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+.btn.danger { color: var(--danger); }
+.btn.sm { padding: 2px 8px; font-size: 12px; }
+.btn.ghost { border-color: transparent; background: none; }
+.btn.ghost.sm { padding: 2px 5px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 7px; overflow: hidden; }
+.seg button { background: var(--panel); color: var(--muted); border: 0; padding: 4px 10px; cursor: pointer; border-right: 1px solid var(--border); }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--accent-weak); color: var(--text); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+.chip.err { background: var(--danger-weak); color: var(--danger); border-color: transparent; }
+.chip.warn { background: var(--warn-weak); color: var(--warn); border-color: transparent; }
+.chip.ok { background: var(--ok-weak); color: var(--ok); border-color: transparent; }
+.chip.acc { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
+.mt { white-space: nowrap; font-size: 10.5px; font-weight: 700; letter-spacing: .4px; padding: 1px 6px; border-radius: 4px; }
+.mt.VIEW { background: var(--accent-weak); color: var(--accent); }
+.mt.MANAGE_VIEW { background: var(--ok-weak); color: var(--ok); }
+.mt.DATA_SOURCE { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; border: 1px solid currentColor; }
+.c-grey { color: var(--c-grey); } .c-red { color: var(--c-red); } .c-orange { color: var(--c-orange); } .c-yellow { color: var(--c-yellow); }
+.c-green { color: var(--c-green); } .c-blue { color: var(--c-blue); } .c-purple { color: var(--c-purple); }
+.muted { color: var(--muted); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+.card-h { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
+.card-b { padding: 12px 14px; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 7px 10px; border-bottom: 1px solid var(--border); background: var(--panel-2); white-space: nowrap; position: sticky; top: 0; }
+.tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tbl tr.sel td { background: var(--accent-weak); }
+.tbl tr.click { cursor: pointer; }
+.tbl tr.click:hover td { background: var(--panel-2); }
+.tbl tr.sel:hover td { background: var(--accent-weak); }
+.tbl th.sortable { cursor: pointer; user-select: none; }
+.tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+.section { margin-bottom: 16px; }
+.section-t { font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; margin: 4px 0 8px; display: flex; align-items: center; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.fld { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fld > span.l { font-size: 12px; color: var(--muted); }
+.fld .hint { font-size: 11.5px; color: var(--muted); }
+.inp, select.inp, textarea.inp { width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px; padding: 5px 8px; font: inherit; }
+textarea.inp { resize: vertical; }
+.inp:focus { outline: 2px solid var(--accent-weak); border-color: var(--accent); }
+.inp.invalid { border-color: var(--danger); }
+.inp:disabled { background: var(--panel-2); color: var(--muted); }
+.chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.err-t { color: var(--danger); font-size: 12px; }
+.pickers { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick { border: 1px solid var(--border-strong); background: var(--panel); color: var(--muted); border-radius: 14px; padding: 2px 10px; cursor: pointer; font-size: 12px; }
+.pick.on { background: var(--accent-weak); color: var(--text); border-color: var(--accent); }
+pre.code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 0; overflow: auto; white-space: pre; }
+textarea.code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; background: var(--code-bg); }
+.issues { border-top: 1px solid var(--border); background: var(--panel); max-height: 34vh; overflow: auto; }
+.issues-h { display: flex; align-items: center; gap: 8px; padding: 6px 20px; cursor: pointer; font-weight: 600; position: sticky; top: 0; background: var(--panel); }
+.issue { display: flex; gap: 10px; padding: 5px 20px; border-top: 1px solid var(--border); cursor: pointer; }
+.issue:hover { background: var(--panel-2); }
+.issue .code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; width: 44px; flex: none; }
+.issue.error .code { color: var(--danger); } .issue.warning .code { color: var(--warn); }
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.banner { border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; border: 1px solid var(--border); background: var(--panel-2); }
+.banner.info { background: var(--accent-weak); border-color: transparent; }
+.banner.warn { background: var(--warn-weak); border-color: transparent; }
+.banner.err { background: var(--danger-weak); border-color: transparent; }
+.detail { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px 24px; padding: 6px 4px 10px 36px; }
+.detail dt { font-size: 11.5px; color: var(--muted); }
+.detail dd { margin: 0; white-space: pre-wrap; }
+.dgroup { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 700; grid-column: 1 / -1; margin-top: 4px; }
+.flag { color: var(--warn); cursor: help; }
+.modal-bg { position: fixed; inset: 0; background: rgba(10, 15, 25, .45); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; z-index: 20; }
+.modal { background: var(--panel); border-radius: 12px; box-shadow: var(--shadow); width: min(680px, 100%); max-height: 86vh; display: flex; flex-direction: column; }
+.modal.wide { width: min(900px, 100%); }
+.modal-h { padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 650; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.modal-b { padding: 14px 18px; overflow: auto; }
+.modal-f { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+.drawer-bg { position: fixed; inset: 0; background: rgba(10, 15, 25, .35); z-index: 20; display: flex; justify-content: flex-end; }
+.drawer { background: var(--panel); width: min(520px, 100%); height: 100%; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.step { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.step .cls { width: 92px; flex: none; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 8px; z-index: 30; box-shadow: var(--shadow); }
+.matrix td, .matrix th { text-align: center; }
+.matrix td:first-child, .matrix th:first-child { text-align: left; }
+.pager { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding: 8px 0; color: var(--muted); }
+.empty { color: var(--muted); padding: 30px; text-align: center; }
+.rule-card { margin-bottom: 12px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+.endpoint { display: flex; gap: 8px; padding: 3px 0; }
+.endpoint b { width: 58px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+@media (max-width: 900px) {
+  .body { grid-template-columns: 1fr; }
+  .sidebar { max-height: 30vh; border-right: 0; border-bottom: 1px solid var(--border); }
+  .split { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+  .content { padding: 12px 16px; }
+  .thead { padding: 12px 16px 0; }
+  .topbar { gap: 8px; padding: 0 12px; }
+  .topbar .chip, .brand span { display: none; }
+  .topnav { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="empty">Loading Schema Studio…</div></div>
+<script id="seed" type="application/json">{"templates":{"alert_groups":{"$schema":"../schema/tds-template.schema.json","grammar":"tds/v1","name":"alert_groups","label":"Alert Groups","description":"Lookup list of alert groups. Loaded directly into the table; referenced by alerts.","manageType":"DATA_SOURCE","fields":[{"name":"id","type":"id"},{"name":"alert_group_name","label":"Group name","type":"string","length":255,"required":true,"unique":true,"constraints":{"notBlank":true}}],"access":{"admin":["read","create","update","delete"]},"view":{"titleField":"alert_group_name","defaultSort":[{"field":"alert_group_name","dir":"asc"}]}},"alerts":{"$schema":"../schema/tds-template.schema.json","grammar":"tds/v1","name":"alerts","label":"Alerts","description":"Operational alerts raised by monitoring. Rows are inserted by external processes; users view them and raise tickets.","manageType":"VIEW","options":{"audit":true,"optimisticLock":true},"fields":[{"name":"id","type":"id","ui":{"placement":"hidden"}},{"name":"alert_date","label":"Date","type":"datetime","required":true,"default":{"fn":"now"},"ui":{"placement":"column","widget":"datetime","width":170,"format":"yyyy-MM-dd HH:mm"}},{"name":"alert_name","label":"Alert","type":"string","length":255,"required":true,"constraints":{"notBlank":true},"ui":{"placement":"column","width":280}},{"name":"alert_type","label":"Type","type":"enum","values":[{"value":"CRITICAL","label":"Critical","color":"red"},{"value":"MAJOR","label":"Major","color":"orange"},{"value":"MINOR","label":"Minor","color":"yellow"},{"value":"INFO","label":"Info","color":"blue"}],"required":true,"default":"INFO","ui":{"placement":"column","widget":"select","width":110}},{"name":"alert_group","label":"Group","type":"ref","ref":{"target":"alert_groups","display":"alert_group_name","onDelete":"RESTRICT"},"required":true,"ui":{"placement":"column","widget":"lookup","width":160}},{"name":"alert_source","label":"Source","type":"text","ui":{"placement":"detail","group":"Origin"}},{"name":"alert_site","label":"Site","type":"text","ui":{"placement":"detail","group":"Origin"}},{"name":"alert_description","label":"Description","type":"text","requiredWhen":{"==":[{"var":"alert_type"},"CRITICAL"]},"ui":{"placement":"detail","widget":"textarea","group":"Details","help":"Required for CRITICAL alerts."}},{"name":"alert_ticket","label":"Ticket","type":"text","ui":{"placement":"detail","group":"Details","placeholder":"e.g. OPS-1234"}}],"indexes":[{"name":"ix_alerts_date","fields":["alert_date"]}],"rules":[{"id":"ticket_needs_site","kind":"requires","if":"alert_ticket","then":["alert_site"],"message":"An alert with a ticket must also have a site."}],"actions":[{"name":"create_ticket","label":"Create ticket","icon":"ticket","placement":"row","script":"alerts/create_ticket.js","function":"createTicket","visibleWhen":{"!":{"present":[{"var":"alert_ticket"}]}},"timeoutMs":3000}],"access":{"admin":["read","create","update","delete","run:*"],"viewer":["read","run:create_ticket"]},"view":{"titleField":"alert_name","defaultSort":[{"field":"alert_date","dir":"desc"}],"pageSize":25,"search":["alert_name","alert_source","alert_site","alert_description"],"filters":["alert_type","alert_group","alert_date"]}},"operator_settings":{"$schema":"../schema/tds-template.schema.json","grammar":"tds/v1","name":"operator_settings","label":"Operator Settings","description":"Per-operator, per-jurisdiction game settings. Maintained by admins; read by everyone.","manageType":"MANAGE_VIEW","fields":[{"name":"id","type":"id","ui":{"placement":"hidden"}},{"name":"operator_name","label":"Operator","type":"string","length":255,"required":true,"constraints":{"notBlank":true},"ui":{"placement":"column","widget":"text","width":220}},{"name":"jurisdictional_name","label":"Jurisdiction","type":"string","length":255,"required":true,"constraints":{"notBlank":true},"ui":{"placement":"column","widget":"text","width":200}},{"name":"min_spin_time","label":"Min spin time","type":"double","required":true,"constraints":{"min":0,"max":60},"ui":{"placement":"column","widget":"number","width":140,"format":"0.00 's'","help":"Seconds"}}],"indexes":[{"name":"ux_operator_jurisdiction","fields":["operator_name","jurisdictional_name"],"unique":true}],"access":{"admin":["read","create","update","delete"],"viewer":["read"]},"view":{"titleField":"operator_name","defaultSort":[{"field":"operator_name","dir":"asc"},{"field":"jurisdictional_name","dir":"asc"}],"pageSize":25,"search":["operator_name","jurisdictional_name"],"filters":["jurisdictional_name"]}}},"scripts":{"alerts/create_ticket.js":"/**\n * Action: alerts.create_ticket\n * Builds a plain-text ticket body that can be pasted into Jira, stores it as a\n * file under data/action-output/alerts/ and returns it for the copy dialog.\n *\n * Runs inside the GraalJS sandbox. Only `ctx` is available (see docs/01-schema-grammar.md §8).\n *\n * @param {ActionContext} ctx\n * @returns {ActionResult}\n */\nfunction createTicket(ctx) {\n  const a = ctx.record;\n  const d = ctx.display;\n  const severity = d.alert_type || a.alert_type;\n  const summary = \"[\" + severity + \"] \" + a.alert_name;\n\n  const lines = [\n    \"Summary: \" + summary,\n    \"\",\n    \"h3. Alert details\",\n    \"||Field||Value||\",\n    \"|Alert ID|\" + a.id + \"|\",\n    \"|Date (UTC)|\" + a.alert_date + \"|\",\n    \"|Type|\" + severity + \"|\",\n    \"|Group|\" + (d.alert_group || a.alert_group) + \"|\",\n    \"|Source|\" + orDash(a.alert_source) + \"|\",\n    \"|Site|\" + orDash(a.alert_site) + \"|\",\n    \"\",\n    \"h3. Description\",\n    orDash(a.alert_description),\n    \"\",\n    \"----\",\n    \"Raised by \" + ctx.user.username + \" at \" + ctx.now() + \" via Templated Data Service.\"\n  ];\n  const content = lines.join(\"\\n\");\n\n  const file = ctx.files.writeText(\"ticket-alert-\" + a.id + \".txt\", content);\n  ctx.log.info(\"Ticket text generated for alert \" + a.id);\n\n  return { kind: \"text\", title: summary, content: content, file: file };\n}\n\nfunction orDash(v) {\n  return v === null || v === undefined || String(v).trim() === \"\" ? \"-\" : String(v);\n}\n"},"samples":{"alert_groups":[{"id":1,"alert_group_name":"Network"},{"id":2,"alert_group_name":"Database"},{"id":3,"alert_group_name":"Payments"},{"id":4,"alert_group_name":"Game Servers"},{"id":5,"alert_group_name":"Platform"}],"alerts":[{"id":1,"alert_date":"2026-10-03T09:42:00Z","alert_name":"Packet loss above 5% on edge-02","alert_type":"MAJOR","alert_group":1,"alert_source":"Zabbix","alert_site":"LON-DC1","alert_description":"Packet loss sustained for 10 minutes on uplink 2.","alert_ticket":null},{"id":2,"alert_date":"2026-10-03T08:15:00Z","alert_name":"Replication lag on db-main","alert_type":"CRITICAL","alert_group":2,"alert_source":"Prometheus","alert_site":"LON-DC1","alert_description":"Replica lag 340 s; automatic failover not triggered.","alert_ticket":"OPS-4412"},{"id":3,"alert_date":"2026-10-03T07:58:00Z","alert_name":"Payment gateway timeout spike","alert_type":"CRITICAL","alert_group":3,"alert_source":"Datadog","alert_site":"AWS eu-west-1","alert_description":null,"alert_ticket":null},{"id":4,"alert_date":"2026-10-02T23:10:00Z","alert_name":"Game server pool at 85% capacity","alert_type":"MINOR","alert_group":4,"alert_source":"Grafana","alert_site":"LV-DC2","alert_description":"Scale-out recommended before evening peak.","alert_ticket":null},{"id":5,"alert_date":"2026-10-02T21:44:00Z","alert_name":"TLS certificate expires in 14 days","alert_type":"INFO","alert_group":5,"alert_source":"CertWatch","alert_site":null,"alert_description":"api certificate renewal due.","alert_ticket":null},{"id":6,"alert_date":"2026-10-02T18:03:00Z","alert_name":"Disk usage 91% on log-store-1","alert_type":"MAJOR","alert_group":5,"alert_source":"Zabbix","alert_site":"LV-DC2","alert_description":"Log rotation backlog after config change.","alert_ticket":"OPS-4398"},{"id":7,"alert_date":"2026-10-02T14:27:00Z","alert_name":"Jackpot feed delayed","alert_type":"MAJOR","alert_group":4,"alert_source":"Feed Monitor","alert_site":"LON-DC1","alert_description":"Feed latency 45 s against a 5 s SLA.","alert_ticket":null},{"id":8,"alert_date":"2026-10-02T11:05:00Z","alert_name":"BGP session flap","alert_type":"MINOR","alert_group":1,"alert_source":"NetFlow","alert_site":"AMS-POP","alert_description":null,"alert_ticket":null},{"id":9,"alert_date":"2026-10-01T22:50:00Z","alert_name":"Settlement batch failed","alert_type":"CRITICAL","alert_group":3,"alert_source":"Batch Scheduler","alert_site":"AWS eu-west-1","alert_description":"Nightly settlement job exited with code 2.","alert_ticket":"OPS-4371"},{"id":10,"alert_date":"2026-10-01T16:30:00Z","alert_name":"Deadlock detected on wallet DB","alert_type":"MAJOR","alert_group":2,"alert_source":"Prometheus","alert_site":"LON-DC1","alert_description":"3 deadlocks within 5 minutes.","alert_ticket":null},{"id":11,"alert_date":"2026-10-01T09:12:00Z","alert_name":"New firmware available for cabinet switches","alert_type":"INFO","alert_group":1,"alert_source":"Vendor Feed","alert_site":null,"alert_description":null,"alert_ticket":null},{"id":12,"alert_date":"2026-09-30T20:41:00Z","alert_name":"RNG health check warning","alert_type":"MINOR","alert_group":4,"alert_source":"RNG Monitor","alert_site":"LV-DC2","alert_description":"Chi-square marginal on batch 7781.","alert_ticket":null}],"operator_settings":[{"id":1,"operator_name":"Acme Gaming","jurisdictional_name":"UK","min_spin_time":2.5},{"id":2,"operator_name":"Acme Gaming","jurisdictional_name":"Malta","min_spin_time":0},{"id":3,"operator_name":"Northstar Play","jurisdictional_name":"UK","min_spin_time":2.5},{"id":4,"operator_name":"Northstar Play","jurisdictional_name":"New Jersey","min_spin_time":1},{"id":5,"operator_name":"Bluefin Casino","jurisdictional_name":"Ontario","min_spin_time":0},{"id":6,"operator_name":"Bluefin Casino","jurisdictional_name":"Sweden","min_spin_time":3}]}}</script>
+<script type="module">
+import { html, render, useState, useMemo, useEffect } from 'https://unpkg.com/htm@3.1.1/preact/standalone.module.js';
+
+/* ============================================================================
+ * Grammar model (tds/v1) — mirrors docs/01-schema-grammar.md
+ * ========================================================================== */
+const SEED = JSON.parse(document.getElementById('seed').textContent);
+const STORE_KEY = 'tds-schema-studio/v1';
+const AUDIT = ['created_at', 'created_by', 'updated_at', 'updated_by', 'row_version'];
+const NAME_RE = /^[a-z][a-z0-9_]{0,62}$/;
+const ROLE_RE = /^[a-z][a-z0-9_]{0,40}$/;
+const MANAGE_TYPES = {
+  VIEW: 'Viewer grid only. Rows arrive via REST or direct DB insert.',
+  MANAGE_VIEW: 'Admin edits rows in a generated form; viewers see the grid.',
+  DATA_SOURCE: 'No UI. Loaded directly; feeds other tables as a ref/lookup.',
+};
+const TYPES = {
+  id:       { label: 'id (PK)',  widgets: [] },
+  string:   { label: 'string',   widgets: ['text', 'textarea'], str: true },
+  text:     { label: 'text',     widgets: ['textarea', 'text'], str: true },
+  integer:  { label: 'integer',  widgets: ['number'], num: true, int: true },
+  long:     { label: 'long',     widgets: ['number'], num: true, int: true },
+  decimal:  { label: 'decimal',  widgets: ['number'], num: true },
+  double:   { label: 'double',   widgets: ['number'], num: true },
+  boolean:  { label: 'boolean',  widgets: ['switch', 'checkbox'] },
+  date:     { label: 'date',     widgets: ['date'], temporal: true },
+  datetime: { label: 'datetime', widgets: ['datetime'], temporal: true },
+  time:     { label: 'time',     widgets: ['time'], temporal: true },
+  enum:     { label: 'enum',     widgets: ['select', 'radio'] },
+  ref:      { label: 'ref (FK)', widgets: ['lookup'] },
+  json:     { label: 'json',     widgets: ['json', 'textarea'] },
+  uuid:     { label: 'uuid',     widgets: ['text'] },
+};
+const COLORS = ['grey', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+const TABLE_OPS = ['read', 'create', 'update', 'delete'];
+const FIELD_OPS = ['read', 'create', 'update'];
+const BUILTIN_ROLES = ['admin', 'viewer'];
+
+const clone = v => structuredClone(v);
+const present = v => v !== null && v !== undefined && !(typeof v === 'string' && v.trim() === '');
+const truthy = v => Array.isArray(v) ? v.length > 0 : !!v;
+const stable = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Array.isArray(x)
+  ? Object.keys(x).sort().reduce((o, k2) => (o[k2] = x[k2], o), {}) : x);
+const same = (a, b) => stable(a) === stable(b);
+const enumValues = f => (f.values || []).map(v => typeof v === 'string' ? { value: v } : v);
+const placementOf = f => f.type === 'id' ? (f.ui?.placement || 'hidden') : (f.ui?.placement || 'column');
+const widgetOf = f => f.ui?.widget || TYPES[f.type]?.widgets[0];
+const ordered = fields => fields.map((f, i) => ({ f, o: f.ui?.order ?? (i + 1) * 10 })).sort((a, b) => a.o - b.o).map(x => x.f);
+const knownFields = t => new Set([...(t.fields || []).map(f => f.name), ...AUDIT]);
+const setOrDel = (o, k, v) => { if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) delete o[k]; else o[k] = v; };
+function setSub(obj, sub, key, v) {
+  obj[sub] = obj[sub] || {};
+  setOrDel(obj[sub], key, v);
+  if (!Object.keys(obj[sub]).length) delete obj[sub];
+}
+
+/* Keep every reference to a field in step with a rename or delete. */
+function renameRefs(t, from, to) {
+  const r = n => n === from ? to : n;
+  const rl = x => x === undefined ? x : JSON.parse(JSON.stringify(x), (k, v) =>
+    k === 'var' && typeof v === 'string' && (v === from || v.startsWith(from + '.')) ? to + v.slice(from.length) : v);
+  for (const ix of t.indexes || []) ix.fields = ix.fields.map(r);
+  for (const ru of t.rules || []) {
+    if (ru.if) ru.if = r(ru.if);
+    if (ru.then) ru.then = ru.then.map(r);
+    if (ru.fields) ru.fields = ru.fields.map(r);
+    if (ru.when !== undefined) ru.when = rl(ru.when);
+    if (ru.assert !== undefined) ru.assert = rl(ru.assert);
+  }
+  const v = t.view;
+  if (v) {
+    if (v.titleField) v.titleField = r(v.titleField);
+    (v.defaultSort || []).forEach(x => { x.field = r(x.field); });
+    if (v.search) v.search = v.search.map(r);
+    if (v.filters) v.filters = v.filters.map(r);
+  }
+  for (const f of t.fields) {
+    if (f.requiredWhen !== undefined) f.requiredWhen = rl(f.requiredWhen);
+    if (f.ui?.visibleWhen !== undefined) f.ui.visibleWhen = rl(f.ui.visibleWhen);
+    if (f.ui?.readonlyWhen !== undefined) f.ui.readonlyWhen = rl(f.ui.readonlyWhen);
+  }
+  for (const a of t.actions || []) if (a.visibleWhen !== undefined) a.visibleWhen = rl(a.visibleWhen);
+}
+function dropRefs(t, name) {
+  const keep = n => n !== name;
+  t.indexes = (t.indexes || []).map(ix => ({ ...ix, fields: ix.fields.filter(keep) })).filter(ix => ix.fields.length);
+  if (!t.indexes.length) delete t.indexes;
+  for (const ru of t.rules || []) {
+    if (ru.then) ru.then = ru.then.filter(keep);
+    if (ru.fields) ru.fields = ru.fields.filter(keep);
+  }
+  const v = t.view;
+  if (v) {
+    if (v.titleField === name) delete v.titleField;
+    if (v.defaultSort) { v.defaultSort = v.defaultSort.filter(x => keep(x.field)); if (!v.defaultSort.length) delete v.defaultSort; }
+    if (v.search) { v.search = v.search.filter(keep); if (!v.search.length) delete v.search; }
+    if (v.filters) { v.filters = v.filters.filter(keep); if (!v.filters.length) delete v.filters; }
+  }
+}
+
+/* ---------- JsonLogic (subset + custom `present`) ---------- */
+function jl(rule, data) {
+  if (Array.isArray(rule)) return rule.map(r => jl(r, data));
+  if (rule === null || typeof rule !== 'object') return rule;
+  const op = Object.keys(rule)[0];
+  let args = rule[op];
+  if (!Array.isArray(args)) args = [args];
+  if (op === 'if') {
+    let i = 0;
+    for (; i < args.length - 1; i += 2) if (truthy(jl(args[i], data))) return jl(args[i + 1], data);
+    return i < args.length ? jl(args[i], data) : null;
+  }
+  if (op === 'and') { let v = true; for (const a of args) { v = jl(a, data); if (!truthy(v)) return v; } return v; }
+  if (op === 'or') { let v = false; for (const a of args) { v = jl(a, data); if (truthy(v)) return v; } return v; }
+  const v = args.map(a => jl(a, data));
+  switch (op) {
+    case 'var': {
+      const path = v[0];
+      if (path === '' || path == null) return data;
+      let cur = data;
+      for (const p of String(path).split('.')) { if (cur == null) return v[1] ?? null; cur = cur[p]; }
+      return cur === undefined ? (v[1] ?? null) : cur;
+    }
+    case '==': return v[0] == v[1];
+    case '===': return v[0] === v[1];
+    case '!=': return v[0] != v[1];
+    case '!==': return v[0] !== v[1];
+    case '!': return !truthy(v[0]);
+    case '!!': return truthy(v[0]);
+    case '<': return v.length === 3 ? v[0] < v[1] && v[1] < v[2] : v[0] < v[1];
+    case '<=': return v.length === 3 ? v[0] <= v[1] && v[1] <= v[2] : v[0] <= v[1];
+    case '>': return v[0] > v[1];
+    case '>=': return v[0] >= v[1];
+    case 'in': return v[1] != null && typeof v[1].includes === 'function' && v[1].includes(v[0]);
+    case '+': return v.reduce((a, b) => a + Number(b), 0);
+    case '-': return v.length === 1 ? -v[0] : v[0] - v[1];
+    case '*': return v.reduce((a, b) => a * Number(b), 1);
+    case '/': return v[0] / v[1];
+    case '%': return v[0] % v[1];
+    case 'present': return present(v[0]);
+    default: throw new Error('Unsupported JsonLogic operator "' + op + '"');
+  }
+}
+function jlVars(rule, out = []) {
+  if (Array.isArray(rule)) rule.forEach(r => jlVars(r, out));
+  else if (rule && typeof rule === 'object') {
+    for (const [k, a] of Object.entries(rule)) {
+      if (k === 'var') { const p = Array.isArray(a) ? a[0] : a; if (typeof p === 'string' && p) out.push(p.split('.')[0]); }
+      else jlVars(a, out);
+    }
+  }
+  return out;
+}
+
+/* ---------- Access ---------- */
+const defaultAccess = t => ({ admin: [...TABLE_OPS, 'run:*'], viewer: t.manageType === 'DATA_SOURCE' ? [] : ['read'] });
+const accessOf = t => t.access ?? defaultAccess(t);
+function tableOps(t, role) {
+  if (role === 'admin') return new Set([...TABLE_OPS, 'run:*']);
+  return new Set(accessOf(t)[role] || []);
+}
+function can(t, roles, op) {
+  return roles.some(r => { const s = tableOps(t, r); return s.has(op) || (op.startsWith('run:') && s.has('run:*')); });
+}
+function fieldOps(t, f, roles) {
+  const out = new Set();
+  for (const r of roles) {
+    const tops = tableOps(t, r);
+    if (f.type === 'id') { if (tops.has('read')) out.add('read'); continue; }
+    const fops = r === 'admin' ? FIELD_OPS : (f.access?.[r] ?? FIELD_OPS);
+    for (const op of fops) if (tops.has(op)) out.add(op);
+  }
+  return out;
+}
+
+/* ---------- Template validation (semantic; structure is covered by the JSON Schema) ---------- */
+function validateTemplate(t, store) {
+  const out = [];
+  const E = (code, msg, path) => out.push({ level: 'error', code, msg, path });
+  const W = (code, msg, path) => out.push({ level: 'warning', code, msg, path });
+  if (!NAME_RE.test(t.name || '') || t.name.startsWith('tds_')) E('E003', `Table name "${t.name}" must be snake_case and must not start with tds_`, 'name');
+  if (!MANAGE_TYPES[t.manageType]) E('S001', `manageType must be one of ${Object.keys(MANAGE_TYPES).join(', ')}`, 'manageType');
+  const fields = t.fields || [];
+  const known = knownFields(t);
+  const seen = new Set();
+  const checkLogic = (rule, path, what) => {
+    if (rule === undefined) return;
+    for (const v of jlVars(rule)) if (!v.startsWith('$') && !known.has(v)) E('E031', `${what} references unknown field "${v}"`, path);
+    try { jl(rule, {}); } catch (e) { if (String(e.message).startsWith('Unsupported')) W('W006', `${what}: ${e.message}`, path); }
+  };
+  fields.forEach((f, i) => {
+    const p = `fields[${i}]`, n = f.name;
+    if (seen.has(n)) E('E001', `Duplicate field name "${n}"`, p);
+    seen.add(n);
+    if (!NAME_RE.test(n || '')) E('E003', `Field name "${n}" must match ^[a-z][a-z0-9_]{0,62}$`, p);
+    if (AUDIT.includes(n)) E('E003', `"${n}" is a reserved audit column`, p);
+    if (!TYPES[f.type]) { E('S002', `${n}: unknown type "${f.type}"`, p); return; }
+    const c = f.constraints || {};
+    if (f.type === 'enum') {
+      const vals = enumValues(f).map(x => x.value);
+      if (!vals.length) E('S003', `${n}: enum needs at least one value`, p);
+      if (new Set(vals).size !== vals.length) E('E021', `${n}: duplicate enum value`, p);
+      vals.forEach(v => { if (!/^[A-Za-z0-9_\-]{1,64}$/.test(v || '')) E('S005', `${n}: enum value "${v}" must match [A-Za-z0-9_-]{1,64}`, p); });
+      if (f.default !== undefined && typeof f.default !== 'object' && !vals.includes(f.default)) E('E020', `${n}: default "${f.default}" is not one of the enum values`, p);
+    }
+    if (f.type === 'ref') {
+      const tgtName = f.ref?.target;
+      const tgt = tgtName && store.templates[tgtName];
+      if (!tgtName) E('S004', `${n}: ref needs a target`, p);
+      else if (!tgt) E('E010', `${n}: ref target "${tgtName}" does not exist`, p);
+      else {
+        if (!tgt.published) E('E010', `${n}: ref target "${tgtName}" is not published yet. Publish it first`, p);
+        if (!knownFields(tgt.draft).has(f.ref.display)) E('E011', `${n}: display field "${f.ref.display}" not found on ${tgtName}`, p);
+      }
+      if (f.ref?.onDelete === 'SET_NULL' && f.required) E('E012', `${n}: onDelete SET_NULL needs a nullable field`, p);
+    }
+    if (f.type === 'string' && c.maxLength && c.maxLength > (f.length ?? 255)) E('E022', `${n}: maxLength ${c.maxLength} exceeds column length ${f.length ?? 255}`, p);
+    if (c.min != null && c.max != null && c.min > c.max) E('E023', `${n}: min is greater than max`, p);
+    if (c.minLength != null && c.maxLength != null && c.minLength > c.maxLength) E('E023', `${n}: minLength is greater than maxLength`, p);
+    if (c.pattern) { try { new RegExp(c.pattern); } catch { E('S006', `${n}: pattern is not a valid regex`, p); } }
+    checkLogic(f.requiredWhen, p, `${n}.requiredWhen`);
+    checkLogic(f.ui?.visibleWhen, p, `${n}.ui.visibleWhen`);
+    checkLogic(f.ui?.readonlyWhen, p, `${n}.ui.readonlyWhen`);
+    for (const [role, ops] of Object.entries(f.access || {})) {
+      if (!store.roles.includes(role)) W('W001', `${n}: role "${role}" does not exist`, p);
+      const tops = tableOps(t, role);
+      for (const op of ops) if (!tops.has(op)) W('W004', `${n}: grants "${op}" to ${role} but the table does not, so it has no effect`, p);
+    }
+    if (t.manageType === 'DATA_SOURCE' && f.type !== 'id' && f.ui && Object.keys(f.ui).length) W('W002', `${n}: ui settings are ignored for DATA_SOURCE`, p);
+  });
+  const ids = fields.filter(f => f.type === 'id').length;
+  if (ids !== 1) E('E002', `Exactly one field of type "id" is required (found ${ids})`, 'fields');
+  (t.indexes || []).forEach((ix, i) => {
+    if (!/^(ix|ux)_[a-z0-9_]{1,59}$/.test(ix.name || '')) E('S007', `Index name "${ix.name}" must start with ix_ or ux_`, `indexes[${i}]`);
+    (ix.fields || []).forEach(n => { if (!known.has(n)) E('E030', `Index ${ix.name} references unknown field "${n}"`, `indexes[${i}]`); });
+  });
+  const ruleIds = new Set();
+  (t.rules || []).forEach((r, i) => {
+    const p = `rules[${i}]`;
+    if (ruleIds.has(r.id)) E('E001', `Duplicate rule id "${r.id}"`, p);
+    ruleIds.add(r.id);
+    const refs = r.kind === 'requires' ? [r.if, ...(r.then || [])] : (r.fields || []);
+    refs.forEach(n => { if (!known.has(n)) E('E030', `Rule ${r.id} references unknown field "${n}"`, p); });
+    if (r.kind === 'requires' && (!r.if || !(r.then || []).length)) E('S008', `Rule ${r.id}: requires needs "if" and at least one "then" field`, p);
+    if ((r.kind === 'exclusive' || r.kind === 'atLeastOne') && (r.fields || []).length < 2) E('S008', `Rule ${r.id}: pick at least two fields`, p);
+    if (r.kind === 'expr' && !r.message) E('S008', `Rule ${r.id}: expr rules need a message`, p);
+    checkLogic(r.when, p, `Rule ${r.id}.when`);
+    checkLogic(r.assert, p, `Rule ${r.id}.assert`);
+  });
+  const v = t.view || {};
+  [v.titleField, ...(v.defaultSort || []).map(s => s.field), ...(v.search || []), ...(v.filters || [])]
+    .filter(Boolean).forEach(n => { if (!known.has(n)) E('E030', `View references unknown field "${n}"`, 'view'); });
+  const actionNames = new Set((t.actions || []).map(a => a.name));
+  (t.actions || []).forEach((a, i) => {
+    const p = `actions[${i}]`;
+    const src = store.scripts[a.script];
+    if (src == null) E('E040', `Action ${a.name}: script file "${a.script}" not found`, p);
+    else if (!new RegExp(`function\\s+${(a.function || '').replace(/[$]/g, '\\$')}\\s*\\(`).test(src)) E('E040', `Action ${a.name}: function ${a.function}() not found in ${a.script}`, p);
+    checkLogic(a.visibleWhen, p, `Action ${a.name}.visibleWhen`);
+  });
+  for (const [role, ops] of Object.entries(t.access || {})) {
+    if (!store.roles.includes(role)) W('W001', `Access: role "${role}" does not exist`, 'access');
+    ops.filter(o => o.startsWith('run:') && o !== 'run:*').forEach(o => {
+      if (!actionNames.has(o.slice(4))) E('E041', `Access: ${role} grants ${o} but there is no such action`, 'access');
+    });
+  }
+  if (t.manageType === 'MANAGE_VIEW' && !fields.some(f => f.type !== 'id')) W('W003', 'MANAGE_VIEW has no editable field yet', 'fields');
+  return out;
+}
+
+/* ---------- DDL generation ---------- */
+const q = s => `'${String(s).replace(/'/g, "''")}'`;
+function sqlLit(v, d, f) {
+  if (typeof v === 'boolean') return d === 'pg' ? (v ? 'TRUE' : 'FALSE') : (v ? '1' : '0');
+  if (typeof v === 'number') return String(v);
+  if (f && TYPES[f.type]?.num) return String(Number(v));
+  return q(v);
+}
+function colType(f, d) {
+  const pg = d === 'pg';
+  return {
+    string: pg ? `VARCHAR(${f.length ?? 255})` : 'TEXT', text: 'TEXT', integer: 'INTEGER', long: pg ? 'BIGINT' : 'INTEGER',
+    decimal: pg ? `NUMERIC(${f.precision ?? 18},${f.scale ?? 2})` : 'NUMERIC', double: pg ? 'DOUBLE PRECISION' : 'REAL',
+    boolean: pg ? 'BOOLEAN' : 'INTEGER', date: pg ? 'DATE' : 'TEXT', datetime: pg ? 'TIMESTAMPTZ' : 'TEXT', time: pg ? 'TIME' : 'TEXT',
+    enum: pg ? 'VARCHAR(64)' : 'TEXT', ref: pg ? 'BIGINT' : 'INTEGER', json: pg ? 'JSONB' : 'TEXT', uuid: pg ? 'UUID' : 'TEXT',
+  }[f.type];
+}
+function presentSql(t, n) {
+  const f = (t.fields || []).find(x => x.name === n);
+  return f && TYPES[f.type]?.str ? `(${n} IS NOT NULL AND trim(${n}) <> '')` : `${n} IS NOT NULL`;
+}
+function ruleCheckSql(t, r) {
+  if (r.when) return null;
+  if (r.kind === 'requires') return `NOT ${presentSql(t, r.if)} OR (${r.then.map(n => presentSql(t, n)).join(' AND ')})`;
+  if (r.kind === 'exclusive') return r.fields.map(n => `(CASE WHEN ${presentSql(t, n)} THEN 1 ELSE 0 END)`).join(' + ') + ' <= 1';
+  if (r.kind === 'atLeastOne') return r.fields.map(n => presentSql(t, n)).join(' OR ');
+  return null;
+}
+function genDDL(t, d) {
+  const pg = d === 'pg';
+  const cols = [], tail = [], after = [];
+  const w = Math.max(11, ...(t.fields || []).map(f => f.name.length));
+  const nowDef = pg ? 'now()' : "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))";
+  for (const f of t.fields || []) {
+    if (!TYPES[f.type]) continue;
+    if (f.type === 'id') { cols.push(`${f.name.padEnd(w)} ${pg ? 'BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'}`); continue; }
+    const n = f.name, c = f.constraints || {}, parts = [colType(f, d)];
+    if (f.required) parts.push('NOT NULL');
+    if (f.unique) parts.push('UNIQUE');
+    if (f.default !== undefined && f.default !== null) {
+      if (typeof f.default === 'object') {
+        const fn = f.default.fn;
+        if (fn === 'now') parts.push(`DEFAULT ${nowDef}`);
+        else if (fn === 'today') parts.push(`DEFAULT ${pg ? 'CURRENT_DATE' : "(date('now'))"}`);
+        else if (fn === 'uuid' && pg) parts.push('DEFAULT gen_random_uuid()');
+      } else parts.push(`DEFAULT ${sqlLit(f.default, d, f)}`);
+    }
+    const checks = [];
+    if (f.type === 'string' && !pg) checks.push(`length(${n}) <= ${f.length ?? 255}`);
+    if (c.notBlank) checks.push(`trim(${n}) <> ''`);
+    if (c.minLength) checks.push(`length(${n}) >= ${c.minLength}`);
+    if (c.maxLength) checks.push(`length(${n}) <= ${c.maxLength}`);
+    if (c.min != null) checks.push(`${n} >= ${sqlLit(c.min, d, f)}`);
+    if (c.max != null) checks.push(`${n} <= ${sqlLit(c.max, d, f)}`);
+    if (f.type === 'enum') checks.push(`${n} IN (${enumValues(f).map(e => q(e.value)).join(', ')})`);
+    if (f.type === 'boolean' && !pg) checks.push(`${n} IN (0, 1)`);
+    if (f.type === 'json' && !pg) checks.push(`json_valid(${n})`);
+    if (checks.length) parts.push(`CHECK (${checks.join(' AND ')})`);
+    if (f.type === 'ref' && f.ref) {
+      parts.push(`REFERENCES ${f.ref.target}(id) ON DELETE ${(f.ref.onDelete || 'RESTRICT').replace('_', ' ')}`);
+      if (!(t.indexes || []).some(ix => ix.fields[0] === n)) after.push(`CREATE INDEX ix_${t.name}_${n} ON ${t.name} (${n});`);
+    }
+    const app = [];
+    if (c.pattern) app.push(`pattern ${c.pattern}`);
+    if (c.format) app.push(`format ${c.format}`);
+    if (f.requiredWhen) app.push('requiredWhen');
+    if (typeof f.default === 'object' && f.default && (f.default.fn === 'currentUser' || (f.default.fn === 'uuid' && !pg))) app.push(`default ${f.default.fn}()`);
+    cols.push(`${n.padEnd(w)} ${parts.join(' ')}` + (app.length ? `  -- app: ${app.join(', ')}` : ''));
+  }
+  if (t.options?.audit !== false) {
+    cols.push(`${'created_at'.padEnd(w)} ${pg ? 'TIMESTAMPTZ' : 'TEXT'} NOT NULL DEFAULT ${nowDef}`);
+    cols.push(`${'created_by'.padEnd(w)} ${pg ? 'VARCHAR(100)' : 'TEXT'}`);
+    cols.push(`${'updated_at'.padEnd(w)} ${pg ? 'TIMESTAMPTZ' : 'TEXT'}`);
+    cols.push(`${'updated_by'.padEnd(w)} ${pg ? 'VARCHAR(100)' : 'TEXT'}`);
+  }
+  if (t.options?.optimisticLock !== false) cols.push(`${'row_version'.padEnd(w)} ${pg ? 'BIGINT' : 'INTEGER'} NOT NULL DEFAULT 0`);
+  const appRules = [];
+  for (const r of t.rules || []) {
+    const sql = ruleCheckSql(t, r);
+    if (sql) tail.push(`CONSTRAINT ck_${t.name}_${r.id} CHECK (${sql})`);
+    else appRules.push(`-- rule ${r.id} (${r.kind}${r.when ? ', conditional' : ''}): enforced by the service (JsonLogic)`);
+  }
+  const lines = [];
+  if (!pg) lines.push('PRAGMA foreign_keys = ON;', '');
+  lines.push(`CREATE TABLE ${t.name} (`);
+  lines.push([...cols, ...tail].map(x => '  ' + x).join(',\n').replace(/(  -- app:[^\n]*),\n/g, ',$1\n'));
+  lines.push(');');
+  for (const ix of t.indexes || []) lines.push(`CREATE ${ix.unique ? 'UNIQUE ' : ''}INDEX ${ix.name} ON ${t.name} (${ix.fields.join(', ')});`);
+  lines.push(...after);
+  if (appRules.length) lines.push('', ...appRules);
+  return lines.join('\n');
+}
+
+/* ---------- Migration plan (published → draft) ---------- */
+function planMigration(pub, draft) {
+  if (!pub) return [{ cls: 'safe', text: `Create table ${draft.name} with ${draft.fields.length} fields` }];
+  const steps = [];
+  const S = (cls, text) => steps.push({ cls, text });
+  const pmap = Object.fromEntries(pub.fields.map(f => [f.name, f]));
+  const used = new Set();
+  for (const f of draft.fields) {
+    const old = pmap[f.name] || (f.renamedFrom && pmap[f.renamedFrom]);
+    if (!old) {
+      if (f.required && f.default === undefined) S('checked', `Add required column ${f.name} with no default. Existing rows need a backfill value`);
+      else S('safe', `Add column ${f.name} (${f.type})`);
+      continue;
+    }
+    used.add(old.name);
+    if (old.name !== f.name) S('safe', `Rename column ${old.name} → ${f.name}`);
+    if (old.type !== f.type) { S('blocked', `Change type of ${f.name}: ${old.type} → ${f.type} is not allowed in v1. Add a new field instead`); continue; }
+    if (!old.required && f.required) S('checked', `Make ${f.name} NOT NULL (existing nulls are checked)`);
+    if (old.required && !f.required) S('safe', `Allow NULL in ${f.name}`);
+    if (!old.unique && f.unique) S('checked', `Add UNIQUE on ${f.name} (existing duplicates are checked)`);
+    if (old.unique && !f.unique) S('safe', `Drop UNIQUE on ${f.name}`);
+    if ((f.length ?? 255) < (old.length ?? 255) && f.type === 'string') S('checked', `Shrink ${f.name} length ${old.length ?? 255} → ${f.length}`);
+    if ((f.length ?? 255) > (old.length ?? 255) && f.type === 'string') S('safe', `Grow ${f.name} length ${old.length ?? 255} → ${f.length}`);
+    if (f.type === 'enum') {
+      const a = enumValues(old).map(e => e.value), b = enumValues(f).map(e => e.value);
+      const rem = a.filter(x => !b.includes(x)), add = b.filter(x => !a.includes(x));
+      if (add.length) S('safe', `Add enum value(s) ${add.join(', ')} to ${f.name}`);
+      if (rem.length) S('destructive', `Remove enum value(s) ${rem.join(', ')} from ${f.name}. Rows using them must be fixed first`);
+    }
+    if (!same(old.constraints, f.constraints)) S('checked', `Change constraints on ${f.name} (existing rows are checked)`);
+    if (!same(old.ref, f.ref)) S('checked', `Change reference of ${f.name}`);
+    if (!same(old.default, f.default)) S('safe', `Change default of ${f.name}`);
+    const meta = ['label', 'description', 'ui', 'access', 'requiredWhen'].filter(k => !same(old[k], f[k]));
+    if (meta.length) S('metadata', `${f.name}: ${meta.join(', ')}`);
+  }
+  for (const f of pub.fields) if (!used.has(f.name)) S('destructive', `Drop column ${f.name}. Its data will be lost`);
+  const pix = Object.fromEntries((pub.indexes || []).map(i => [i.name, i]));
+  const dix = Object.fromEntries((draft.indexes || []).map(i => [i.name, i]));
+  for (const n in dix) if (!pix[n]) S(dix[n].unique ? 'checked' : 'safe', `Create ${dix[n].unique ? 'unique ' : ''}index ${n}`); else if (!same(pix[n], dix[n])) S('checked', `Recreate index ${n}`);
+  for (const n in pix) if (!dix[n]) S('safe', `Drop index ${n}`);
+  const prule = Object.fromEntries((pub.rules || []).map(r => [r.id, r]));
+  const drule = Object.fromEntries((draft.rules || []).map(r => [r.id, r]));
+  for (const id in drule) {
+    if (same(prule[id], drule[id])) continue;
+    const sql = ruleCheckSql(draft, drule[id]);
+    S(sql ? 'checked' : 'metadata', `${prule[id] ? 'Change' : 'Add'} rule ${id}${sql ? ' (CHECK constraint; existing rows are checked)' : ' (application only)'}`);
+  }
+  for (const id in prule) if (!drule[id]) S(ruleCheckSql(pub, prule[id]) ? 'safe' : 'metadata', `Remove rule ${id}`);
+  for (const k of ['label', 'description', 'manageType', 'actions', 'access', 'view', 'options']) if (!same(pub[k], draft[k])) S('metadata', `Template ${k} changed`);
+  return steps;
+}
+const needsRebuild = steps => steps.some(s => s.cls === 'checked' || s.cls === 'destructive' || /Allow NULL|Drop UNIQUE|enum|Remove rule/.test(s.text));
+
+/* ---------- Record validation (same rules the service enforces) ---------- */
+function validateRecord(t, rec, op, user, rows) {
+  const errs = {}, general = [];
+  const data = { ...rec, $op: op, $user: user };
+  const add = (n, m) => { if (n) { errs[n] = errs[n] || m; } else general.push(m); };
+  for (const f of t.fields) {
+    if (f.type === 'id' || !TYPES[f.type]) continue;
+    const v = rec[f.name], T = TYPES[f.type], c = f.constraints || {};
+    let req = !!f.required;
+    if (!req && f.requiredWhen) { try { req = truthy(jl(f.requiredWhen, data)); } catch { /* reported by template validation */ } }
+    if (!present(v)) { if (req) add(f.name, 'Required'); continue; }
+    if (T.num) {
+      const n = Number(v);
+      if (Number.isNaN(n)) { add(f.name, 'Must be a number'); continue; }
+      if (T.int && !Number.isInteger(n)) add(f.name, 'Must be a whole number');
+      if (c.min != null && n < c.min) add(f.name, `Must be ≥ ${c.min}`);
+      if (c.max != null && n > c.max) add(f.name, `Must be ≤ ${c.max}`);
+    }
+    if (T.str) {
+      const s = String(v), max = Math.min(f.type === 'string' ? (f.length ?? 255) : Infinity, c.maxLength ?? Infinity);
+      if (s.length > max) add(f.name, `At most ${max} characters`);
+      if (c.minLength && s.length < c.minLength) add(f.name, `At least ${c.minLength} characters`);
+      if (c.notBlank && !s.trim()) add(f.name, 'Must not be blank');
+      if (c.pattern) { try { if (!new RegExp(`^(?:${c.pattern})$`).test(s)) add(f.name, `Must match ${c.pattern}`); } catch { /* invalid pattern reported elsewhere */ } }
+      if (c.format === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s)) add(f.name, 'Must be an email address');
+      if (c.format === 'url') { try { new URL(s); } catch { add(f.name, 'Must be a URL'); } }
+    }
+    if (T.temporal) {
+      if (c.min != null && String(v) < String(c.min)) add(f.name, `Must be on or after ${c.min}`);
+      if (c.max != null && String(v) > String(c.max)) add(f.name, `Must be on or before ${c.max}`);
+    }
+    if (f.type === 'enum' && !enumValues(f).some(e => e.value === v)) add(f.name, 'Not an allowed value');
+    if (f.type === 'json' && typeof v === 'string') { try { JSON.parse(v); } catch { add(f.name, 'Invalid JSON'); } }
+  }
+  for (const r of t.rules || []) {
+    if (r.when) { try { if (!truthy(jl(r.when, data))) continue; } catch { continue; } }
+    let ok = true, targets = [];
+    if (r.kind === 'requires') { if (present(rec[r.if])) { targets = (r.then || []).filter(n => !present(rec[n])); ok = !targets.length; } }
+    else if (r.kind === 'exclusive') { ok = (r.fields || []).filter(n => present(rec[n])).length <= 1; targets = r.fields || []; }
+    else if (r.kind === 'atLeastOne') { ok = (r.fields || []).some(n => present(rec[n])); targets = r.fields || []; }
+    else if (r.kind === 'expr') { try { ok = truthy(jl(r.assert, data)); } catch { ok = false; } targets = r.fields || []; }
+    if (!ok) { const m = r.message || `Rule ${r.id} failed`; if (targets.length) targets.forEach(n => add(n, m)); else general.push(m); }
+  }
+  if (rows) {
+    const others = rows.filter(x => x.id !== rec.id);
+    for (const f of t.fields) if (f.unique && present(rec[f.name]) && others.some(x => x[f.name] == rec[f.name])) add(f.name, 'Must be unique');
+    for (const ix of t.indexes || []) if (ix.unique && ix.fields.every(n => present(rec[n])) && others.some(x => ix.fields.every(n => x[n] == rec[n])))
+      add(ix.fields[0], `The combination ${ix.fields.join(' + ')} must be unique`);
+  }
+  return { ok: !Object.keys(errs).length && !general.length, errs, general };
+}
+
+/* ---------- Display helpers ---------- */
+function refText(f, v, store) {
+  const row = (store.samples[f.ref?.target] || []).find(r => r.id == v);
+  return row ? String(row[f.ref.display] ?? `#${v}`) : `#${v}`;
+}
+function fmtDateTime(v, pattern) {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return String(v);
+  const p = n => String(n).padStart(2, '0');
+  const tok = { yyyy: d.getUTCFullYear(), MM: p(d.getUTCMonth() + 1), dd: p(d.getUTCDate()), HH: p(d.getUTCHours()), mm: p(d.getUTCMinutes()), ss: p(d.getUTCSeconds()) };
+  return (pattern || 'yyyy-MM-dd HH:mm').replace(/yyyy|MM|dd|HH|mm|ss/g, k => tok[k]);
+}
+function fmtNum(v, format) {
+  const m = /^0(?:\.(0+))?\s*(?:'([^']*)')?$/.exec(format || '');
+  if (!m) return String(v);
+  return Number(v).toFixed(m[1] ? m[1].length : 0) + (m[2] ? ' ' + m[2] : '');
+}
+function textOf(f, v, store) {
+  if (!present(v)) return '';
+  if (f.type === 'enum') return enumValues(f).find(e => e.value === v)?.label || v;
+  if (f.type === 'ref') return refText(f, v, store);
+  if (f.type === 'datetime') return fmtDateTime(v, f.ui?.format);
+  if (f.type === 'json') return typeof v === 'string' ? v : JSON.stringify(v);
+  if (f.type === 'boolean') return v ? 'Yes' : 'No';
+  return String(v);
+}
+function Cell({ f, v, store }) {
+  if (!present(v)) return html`<span class="muted">—</span>`;
+  if (f.type === 'enum') { const e = enumValues(f).find(x => x.value === v); return html`<span class=${'badge c-' + (e?.color || 'grey')}>${e?.label || v}</span>`; }
+  if (f.type === 'boolean') return v ? '✓' : '✗';
+  if ((f.type === 'double' || f.type === 'decimal') && f.ui?.format) return fmtNum(v, f.ui.format);
+  const s = textOf(f, v, store);
+  return f.type === 'text' && s.length > 80 ? html`<span title=${s}>${s.slice(0, 80)}…</span>` : s;
+}
+function sampleValue(f, i, store) {
+  switch (f.type) {
+    case 'string': return `${f.label || f.name} ${i + 1}`;
+    case 'text': return `Sample ${f.label || f.name} for row ${i + 1}`;
+    case 'integer': case 'long': return (i * 7) % 100;
+    case 'decimal': case 'double': return Math.round(i * 137) / 100;
+    case 'boolean': return i % 2 === 0;
+    case 'date': return new Date(Date.UTC(2026, 9, 3) - i * 864e5).toISOString().slice(0, 10);
+    case 'datetime': return new Date(Date.UTC(2026, 9, 3, 12) - i * 3.7 * 36e5).toISOString().replace(/\.\d+Z$/, 'Z');
+    case 'time': return `${String(8 + (i % 10)).padStart(2, '0')}:30:00`;
+    case 'enum': { const vs = enumValues(f); return vs.length ? vs[i % vs.length].value : null; }
+    case 'ref': { const rows = store.samples[f.ref?.target] || []; return rows.length ? rows[i % rows.length].id : null; }
+    case 'json': return { n: i };
+    case 'uuid': return `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+    default: return null;
+  }
+}
+const withSamples = (t, rows, store) => rows.map((r, i) => {
+  const o = { ...r };
+  for (const f of t.fields) {
+    if (f.name in o || f.type === 'id') continue;
+    o[f.name] = f.renamedFrom && f.renamedFrom in o ? o[f.renamedFrom] : sampleValue(f, i, store);
+  }
+  return o;
+});
+
+/* ---------- Actions (browser stand-in for the GraalJS sandbox) ---------- */
+function runAction(a, t, store, record, records, user) {
+  const src = store.scripts[a.script];
+  if (src == null) throw new Error(`Script ${a.script} not found`);
+  const display = {};
+  if (record) for (const f of t.fields) if (f.type === 'enum' || f.type === 'ref') display[f.name] = textOf(f, record[f.name], store);
+  const files = [];
+  const ctx = Object.freeze({
+    record: record ? Object.freeze({ ...record }) : null,
+    records: records ? Object.freeze(records.map(r => Object.freeze({ ...r }))) : null,
+    display: Object.freeze(display),
+    user: Object.freeze({ ...user }),
+    template: Object.freeze({ name: t.name, label: t.label }),
+    now: () => new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
+    files: Object.freeze({ writeText: (name, text) => { files.push({ name: String(name), text: String(text) }); return `data/action-output/${t.name}/${name}`; } }),
+    log: Object.freeze({ info: m => console.info(`[${t.name}.${a.name}]`, m), warn: m => console.warn(`[${t.name}.${a.name}]`, m) }),
+  });
+  const fn = new Function('ctx', `"use strict";\n${src}\nreturn ${a.function}(ctx);`);
+  const t0 = performance.now();
+  const result = fn(ctx);
+  return { result, files, ms: Math.round(performance.now() - t0) };
+}
+
+/* ---------- Store ---------- */
+function initStore() {
+  const templates = {};
+  for (const [name, tpl] of Object.entries(SEED.templates)) {
+    const d = clone(tpl); delete d.$schema;
+    templates[name] = { draft: d, published: clone(d), version: 1, history: [{ version: 1, at: '2026-10-03T10:00:00Z', by: 'seed', note: `Imported from templates/${name}.json` }] };
+  }
+  return { v: 1, roles: ['admin', 'viewer', 'operator'], scripts: clone(SEED.scripts), templates, samples: clone(SEED.samples) };
+}
+function loadStore() {
+  try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if (s && s.v === 1 && s.templates) return s; } catch { /* storage unavailable */ }
+  return initStore();
+}
+function saveStore(s) { try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch { /* storage unavailable */ } }
+function download(name, text, type = 'application/json') {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); return true; }
+}
+const exportJson = t => JSON.stringify({ $schema: '../schema/tds-template.schema.json', ...t }, null, 2) + '\n';
+
+/* ============================================================================
+ * Small form controls
+ * ========================================================================== */
+function Text({ label, value, onChange, placeholder, mono, disabled, hint, area, rows = 3, lazy }) {
+  const cls = 'inp' + (mono ? ' mono' : '');
+  if (lazy) return html`<label class="fld"><span class="l">${label}</span>
+    <input class=${cls} value=${value ?? ''} placeholder=${placeholder || ''} disabled=${disabled} onChange=${e => onChange(e.target.value)} />
+    ${hint && html`<span class="hint">${hint}</span>`}</label>`;
+  return html`<label class="fld"><span class="l">${label}</span>
+    ${area
+      ? html`<textarea class=${cls} rows=${rows} value=${value ?? ''} placeholder=${placeholder || ''} disabled=${disabled} onInput=${e => onChange(e.target.value)} />`
+      : html`<input class=${cls} value=${value ?? ''} placeholder=${placeholder || ''} disabled=${disabled} onInput=${e => onChange(e.target.value)} />`}
+    ${hint && html`<span class="hint">${hint}</span>`}</label>`;
+}
+function Num({ label, value, onChange, placeholder, hint }) {
+  return html`<label class="fld"><span class="l">${label}</span>
+    <input class="inp" type="number" value=${value ?? ''} placeholder=${placeholder || ''} onInput=${e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
+    ${hint && html`<span class="hint">${hint}</span>`}</label>`;
+}
+function Sel({ label, value, options, onChange, disabled, hint }) {
+  return html`<label class="fld"><span class="l">${label}</span>
+    <select class="inp" value=${value ?? ''} disabled=${disabled} onChange=${e => onChange(e.target.value)}>
+      ${options.map(o => Array.isArray(o) ? html`<option value=${o[0]}>${o[1]}</option>` : html`<option value=${o}>${o}</option>`)}
+    </select>${hint && html`<span class="hint">${hint}</span>`}</label>`;
+}
+function Check({ label, checked, onChange, disabled }) {
+  return html`<label class="chk"><input type="checkbox" checked=${!!checked} disabled=${disabled} onChange=${e => onChange(e.target.checked)} />${label}</label>`;
+}
+function JsonBox({ label, value, onChange, hint, rows = 3 }) {
+  const fmt = v => v === undefined ? '' : JSON.stringify(v);
+  const [text, setText] = useState(fmt(value));
+  const [err, setErr] = useState(null);
+  useEffect(() => { setText(fmt(value)); setErr(null); }, [stable(value)]);
+  const commit = () => {
+    if (!text.trim()) { setErr(null); onChange(undefined); return; }
+    try { const v = JSON.parse(text); setErr(null); onChange(v); } catch (e) { setErr(e.message); }
+  };
+  return html`<label class="fld"><span class="l">${label}</span>
+    <textarea class=${'inp code' + (err ? ' invalid' : '')} rows=${rows} value=${text} placeholder='JsonLogic, e.g. {"==":[{"var":"alert_type"},"CRITICAL"]}'
+      onInput=${e => setText(e.target.value)} onBlur=${commit} />
+    ${err ? html`<span class="err-t">${err}</span>` : hint && html`<span class="hint">${hint}</span>`}</label>`;
+}
+function FieldPicker({ fields, value, onChange, filter }) {
+  const v = value || [];
+  const list = fields.filter(f => f.type !== 'id' && (!filter || filter(f)));
+  return html`<div class="pickers">${list.map(f => html`<button type="button" class=${'pick' + (v.includes(f.name) ? ' on' : '')}
+      onClick=${() => onChange(v.includes(f.name) ? v.filter(x => x !== f.name) : [...v, f.name])}>${f.name}</button>`)}
+    ${!list.length && html`<span class="muted">No eligible fields</span>`}</div>`;
+}
+function Modal({ title, children, footer, onClose, wide }) {
+  return html`<div class="modal-bg" onClick=${e => e.target === e.currentTarget && onClose()}>
+    <div class=${'modal' + (wide ? ' wide' : '')} role="dialog" aria-label=${title}>
+      <div class="modal-h">${title}<span class="spacer"></span><button class="btn ghost" onClick=${onClose} aria-label="Close">✕</button></div>
+      <div class="modal-b">${children}</div>
+      ${footer && html`<div class="modal-f">${footer}</div>`}
+    </div></div>`;
+}
+
+/* ============================================================================
+ * Fields tab
+ * ========================================================================== */
+function typeSummary(f) {
+  if (f.type === 'string') return `string(${f.length ?? 255})`;
+  if (f.type === 'decimal') return `decimal(${f.precision ?? 18},${f.scale ?? 2})`;
+  if (f.type === 'enum') return `enum[${enumValues(f).length}]`;
+  if (f.type === 'ref') return `ref → ${f.ref?.target || '?'}`;
+  return f.type;
+}
+function FieldsTab({ t, entry, store, updT, idx, setIdx, issues }) {
+  const f = t.fields[idx];
+  const move = (i, d) => { const j = i + d; if (j < 0 || j >= t.fields.length) return; updT(x => { const a = x.fields; [a[i], a[j]] = [a[j], a[i]]; }); setIdx(j); };
+  const addField = () => {
+    let n = 1; while (t.fields.some(x => x.name === `new_field_${n}`)) n++;
+    updT(x => x.fields.push({ name: `new_field_${n}`, label: `New field ${n}`, type: 'string', length: 255, ui: { placement: 'column' } }));
+    setIdx(t.fields.length);
+  };
+  const del = i => { updT(x => { const [gone] = x.fields.splice(i, 1); dropRefs(x, gone.name); }); setIdx(Math.max(0, i - 1)); };
+  return html`<div class="split">
+    <div class="card">
+      <div class="card-h">Fields <span class="chip">${t.fields.length}</span><span class="spacer"></span>
+        <button class="btn sm" onClick=${addField}>+ Add field</button></div>
+      <div style="overflow:auto">
+      <table class="tbl">
+        <thead><tr><th style="width:64px"></th><th>Name</th><th>Type</th><th>Req</th><th>Uniq</th><th>Placement</th><th></th></tr></thead>
+        <tbody>${t.fields.map((x, i) => {
+          const n = issues.filter(s => s.path === `fields[${i}]`);
+          const errs = n.filter(s => s.level === 'error').length;
+          return html`<tr key=${i} class=${'click' + (i === idx ? ' sel' : '')} onClick=${() => setIdx(i)}>
+            <td style="white-space:nowrap"><button class="btn ghost sm" title="Move up" onClick=${e => { e.stopPropagation(); move(i, -1); }}>↑</button><button class="btn ghost sm" title="Move down" onClick=${e => { e.stopPropagation(); move(i, 1); }}>↓</button></td>
+            <td><div class="mono" style="font-weight:600">${x.name}</div><div class="muted" style="font-size:12px">${x.label || ''}</div></td>
+            <td class="mono">${typeSummary(x)}</td>
+            <td>${x.type === 'id' ? html`<span class="muted">PK</span>` : x.required ? '✓' : x.requiredWhen ? html`<span class="chip acc" title="requiredWhen">when</span>` : ''}</td>
+            <td>${x.unique ? '✓' : ''}</td>
+            <td><span class="chip">${t.manageType === 'DATA_SOURCE' ? 'n/a' : placementOf(x)}</span></td>
+            <td>${n.length ? html`<span class=${'chip ' + (errs ? 'err' : 'warn')} title=${n.map(s => s.msg).join('\n')}>${n.length}</span>` : ''}</td>
+          </tr>`;
+        })}</tbody>
+      </table></div>
+    </div>
+    <div>${f ? html`<${FieldInspector} key=${idx} t=${t} f=${f} idx=${idx} entry=${entry} store=${store} updT=${updT} onDelete=${() => del(idx)} />`
+      : html`<div class="card empty">Select a field</div>`}</div>
+  </div>`;
+}
+
+function FieldInspector({ t, f, idx, entry, store, updT, onDelete }) {
+  const upd = fn => updT(x => fn(x.fields[idx], x));
+  const pubNames = new Set((entry.published?.fields || []).map(x => x.name));
+  const isPub = pubNames.has(f.name) || (f.renamedFrom && pubNames.has(f.renamedFrom));
+  const T = TYPES[f.type] || {};
+  const c = f.constraints || {};
+  const others = Object.keys(store.templates).filter(n => n !== t.name);
+  const ds = t.manageType === 'DATA_SOURCE';
+
+  const setName = v => upd((x, tt) => {
+    const from = x.name;
+    if (!v || v === from) return;
+    if (!x.renamedFrom && pubNames.has(from)) x.renamedFrom = from;
+    x.name = v;
+    if (x.renamedFrom === v) delete x.renamedFrom;
+    if (!tt.fields.some(y => y !== x && y.name === v)) renameRefs(tt, from, v);
+  });
+  const setType = v => upd(x => {
+    ['length', 'precision', 'scale', 'values', 'ref', 'default'].forEach(k => delete x[k]);
+    x.type = v;
+    if (v === 'string') x.length = 255;
+    if (v === 'enum') x.values = ['VALUE_1'];
+    if (v === 'ref') { const tg = others[0]; const tf = tg && store.templates[tg].draft.fields.find(y => y.type !== 'id'); x.ref = { target: tg || '', display: tf?.name || 'id', onDelete: 'RESTRICT' }; }
+    if (x.ui?.widget && !TYPES[v].widgets.includes(x.ui.widget)) setSub(x, 'ui', 'widget', undefined);
+    delete x.constraints;
+  });
+  const defMode = f.default === undefined ? '' : typeof f.default === 'object' && f.default ? 'fn:' + f.default.fn : 'value';
+  const fnOptions = { datetime: ['now'], date: ['today'], uuid: ['uuid'], string: ['currentUser'], text: ['currentUser'] }[f.type] || [];
+
+  if (f.type === 'id') {
+    return html`<div class="card"><div class="card-h"><span class="mono">${f.name}</span><span class="chip">system primary key</span></div>
+      <div class="card-b">
+        <p class="muted" style="margin-top:0">Surrogate key. SQLite <code>INTEGER PRIMARY KEY AUTOINCREMENT</code>,
+          PostgreSQL <code>BIGINT GENERATED BY DEFAULT AS IDENTITY</code>. The system assigns it, so it is read-only for every role.</p>
+        <div class="grid2">
+          <${Text} label="Name" value=${f.name} mono lazy onChange=${setName} disabled=${isPub} hint=${isPub ? 'Immutable after publish' : ''} />
+          <${Sel} label="Placement" value=${placementOf(f)} options=${['hidden', 'column', 'detail']} onChange=${v => upd(x => setSub(x, 'ui', 'placement', v === 'hidden' ? 'hidden' : v))} />
+        </div>
+      </div></div>`;
+  }
+
+  return html`<div class="card">
+    <div class="card-h"><span class="mono">${f.name}</span>${f.renamedFrom && html`<span class="chip acc">renamed from ${f.renamedFrom}</span>`}
+      <span class="spacer"></span><button class="btn sm danger" onClick=${onDelete}>Delete</button></div>
+    <div class="card-b">
+      <div class="section"><div class="section-t">Basics</div>
+        <div class="grid2">
+          <${Text} label="Name (column)" value=${f.name} mono lazy onChange=${setName} hint=${isPub ? 'Renaming keeps the data (RENAME COLUMN)' : 'snake_case'} />
+          <${Text} label="Label" value=${f.label} onChange=${v => upd(x => setOrDel(x, 'label', v))} />
+          <${Sel} label="Type" value=${f.type} options=${Object.keys(TYPES).filter(k => k !== 'id').map(k => [k, TYPES[k].label])}
+            onChange=${setType} disabled=${isPub} hint=${isPub ? 'Immutable after publish (v1)' : ''} />
+          ${f.type === 'string' && html`<${Num} label="Length" value=${f.length} onChange=${v => upd(x => setOrDel(x, 'length', v))} placeholder="255" />`}
+          ${f.type === 'decimal' && html`<${Num} label="Precision" value=${f.precision} onChange=${v => upd(x => setOrDel(x, 'precision', v))} placeholder="18" />`}
+          ${f.type === 'decimal' && html`<${Num} label="Scale" value=${f.scale} onChange=${v => upd(x => setOrDel(x, 'scale', v))} placeholder="2" />`}
+        </div>
+        <div style="margin-top:10px"><${Text} label="Description" value=${f.description} onChange=${v => upd(x => setOrDel(x, 'description', v))} /></div>
+      </div>
+
+      ${f.type === 'enum' && html`<div class="section"><div class="section-t">Enum values</div>
+        <table class="tbl"><thead><tr><th>Value</th><th>Label</th><th>Color</th><th></th></tr></thead><tbody>
+          ${enumValues(f).map((e, i) => html`<tr key=${i}>
+            <td><input class="inp mono" value=${e.value} onInput=${ev => upd(x => { const vs = enumValues(x); vs[i].value = ev.target.value; x.values = vs; })} /></td>
+            <td><input class="inp" value=${e.label || ''} onInput=${ev => upd(x => { const vs = enumValues(x); setOrDel(vs[i], 'label', ev.target.value); x.values = vs; })} /></td>
+            <td><select class="inp" value=${e.color || ''} onChange=${ev => upd(x => { const vs = enumValues(x); setOrDel(vs[i], 'color', ev.target.value); x.values = vs; })}>
+              <option value="">—</option>${COLORS.map(cl => html`<option value=${cl}>${cl}</option>`)}</select></td>
+            <td><button class="btn ghost sm" title="Remove" onClick=${() => upd(x => { const vs = enumValues(x); vs.splice(i, 1); x.values = vs; })}>✕</button></td>
+          </tr>`)}
+        </tbody></table>
+        <button class="btn sm" style="margin-top:6px" onClick=${() => upd(x => { x.values = [...enumValues(x), { value: `VALUE_${enumValues(x).length + 1}` }]; })}>+ Value</button>
+      </div>`}
+
+      ${f.type === 'ref' && html`<div class="section"><div class="section-t">Reference</div>
+        <div class="grid2">
+          <${Sel} label="Target table" value=${f.ref?.target} options=${[['', '— choose —'], ...others]} onChange=${v => upd(x => {
+            const tf = store.templates[v]?.draft.fields.find(y => y.type !== 'id'); x.ref = { ...x.ref, target: v, display: tf?.name || 'id' };
+          })} />
+          <${Sel} label="Display field" value=${f.ref?.display} options=${(store.templates[f.ref?.target]?.draft.fields || []).map(y => y.name)}
+            onChange=${v => upd(x => { x.ref = { ...x.ref, display: v }; })} />
+          <${Sel} label="On delete of target row" value=${f.ref?.onDelete || 'RESTRICT'} options=${['RESTRICT', 'CASCADE', 'SET_NULL']}
+            onChange=${v => upd(x => { x.ref = { ...x.ref, onDelete: v }; })} />
+        </div>
+        <p class="hint muted">The column stores the target's <code>id</code>. Grids and lookups show <code>${f.ref?.display}</code>.</p>
+      </div>`}
+
+      <div class="section"><div class="section-t">Constraints</div>
+        <div style="display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap">
+          <${Check} label="Required" checked=${f.required} onChange=${v => upd(x => setOrDel(x, 'required', v || undefined))} />
+          ${f.type !== 'json' && f.type !== 'text' && html`<${Check} label="Unique" checked=${f.unique} onChange=${v => upd(x => setOrDel(x, 'unique', v || undefined))} />`}
+          ${T.str && html`<${Check} label="Not blank" checked=${c.notBlank} onChange=${v => upd(x => setSub(x, 'constraints', 'notBlank', v || undefined))} />`}
+        </div>
+        <div class="grid2">
+          <${Sel} label="Default" value=${defMode} options=${[['', 'none'], ['value', 'literal value'], ...fnOptions.map(fn => ['fn:' + fn, fn + '()'])]}
+            onChange=${v => upd(x => { if (!v) delete x.default; else if (v === 'value') x.default = f.type === 'enum' ? enumValues(x)[0]?.value : f.type === 'boolean' ? false : T.num ? 0 : ''; else x.default = { fn: v.slice(3) }; })} />
+          ${defMode === 'value' && (f.type === 'enum'
+            ? html`<${Sel} label="Default value" value=${f.default} options=${enumValues(f).map(e => e.value)} onChange=${v => upd(x => { x.default = v; })} />`
+            : f.type === 'boolean'
+              ? html`<${Sel} label="Default value" value=${String(f.default)} options=${['true', 'false']} onChange=${v => upd(x => { x.default = v === 'true'; })} />`
+              : T.num ? html`<${Num} label="Default value" value=${f.default} onChange=${v => upd(x => { x.default = v ?? 0; })} />`
+              : html`<${Text} label="Default value" value=${f.default} onChange=${v => upd(x => { x.default = v; })} />`)}
+          ${T.str && html`<${Num} label="Min length" value=${c.minLength} onChange=${v => upd(x => setSub(x, 'constraints', 'minLength', v))} />`}
+          ${T.str && html`<${Num} label="Max length" value=${c.maxLength} onChange=${v => upd(x => setSub(x, 'constraints', 'maxLength', v))} />`}
+          ${f.type === 'string' && html`<${Text} label="Pattern (regex)" mono value=${c.pattern} onChange=${v => upd(x => setSub(x, 'constraints', 'pattern', v))} hint="App-enforced, anchored" />`}
+          ${f.type === 'string' && html`<${Sel} label="Format" value=${c.format} options=${[['', 'none'], 'email', 'url', 'hostname', 'ipv4']} onChange=${v => upd(x => setSub(x, 'constraints', 'format', v))} />`}
+          ${T.num && html`<${Num} label="Min" value=${c.min} onChange=${v => upd(x => setSub(x, 'constraints', 'min', v))} />`}
+          ${T.num && html`<${Num} label="Max" value=${c.max} onChange=${v => upd(x => setSub(x, 'constraints', 'max', v))} />`}
+          ${T.temporal && html`<${Text} label="Min" mono value=${c.min} placeholder="ISO value" onChange=${v => upd(x => setSub(x, 'constraints', 'min', v))} />`}
+          ${T.temporal && html`<${Text} label="Max" mono value=${c.max} placeholder="ISO value" onChange=${v => upd(x => setSub(x, 'constraints', 'max', v))} />`}
+        </div>
+        <div style="margin-top:10px"><${JsonBox} label="Required when (JsonLogic)" value=${f.requiredWhen} onChange=${v => upd(x => setOrDel(x, 'requiredWhen', v))}
+          hint="Context: record fields, $op, $user. Custom op: present" /></div>
+      </div>
+
+      <div class="section"><div class="section-t">UI ${ds && html`<span class="chip warn">ignored for DATA_SOURCE</span>`}</div>
+        <div class="grid2">
+          <label class="fld"><span class="l">Placement in view grid</span>
+            <div class="seg">${['column', 'detail', 'hidden'].map(p => html`<button type="button" class=${placementOf(f) === p ? 'on' : ''}
+              onClick=${() => upd(x => setSub(x, 'ui', 'placement', p))}>${p}</button>`)}</div>
+            <span class="hint">column = row label · detail = expanded row · hidden = NIL</span></label>
+          <${Sel} label="Input widget" value=${f.ui?.widget || ''} options=${[['', `default (${T.widgets?.[0]})`], ...(T.widgets || [])]}
+            onChange=${v => upd(x => setSub(x, 'ui', 'widget', v))} />
+          <${Num} label="Column width (px)" value=${f.ui?.width} onChange=${v => upd(x => setSub(x, 'ui', 'width', v))} />
+          <${Text} label="Form group" value=${f.ui?.group} onChange=${v => upd(x => setSub(x, 'ui', 'group', v))} />
+          <${Text} label="Help text" value=${f.ui?.help} onChange=${v => upd(x => setSub(x, 'ui', 'help', v))} />
+          <${Text} label="Placeholder" value=${f.ui?.placeholder} onChange=${v => upd(x => setSub(x, 'ui', 'placeholder', v))} />
+          <${Text} label="Display format" mono value=${f.ui?.format} placeholder=${f.type === 'datetime' ? 'yyyy-MM-dd HH:mm' : T.num ? "0.00 's'" : ''}
+            onChange=${v => upd(x => setSub(x, 'ui', 'format', v))} />
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <${JsonBox} label="Visible when" value=${f.ui?.visibleWhen} onChange=${v => upd(x => setSub(x, 'ui', 'visibleWhen', v))} />
+          <${JsonBox} label="Read-only when" value=${f.ui?.readonlyWhen} onChange=${v => upd(x => setSub(x, 'ui', 'readonlyWhen', v))} />
+        </div>
+      </div>
+
+      <div class="section"><div class="section-t">Effective access</div>
+        <div class="kv">${store.roles.map(r => html`<span class="mono">${r}</span>
+          <span>${[...fieldOps(t, f, [r])].join(', ') || html`<span class="muted">none</span>`}${f.access?.[r] ? html` <span class="chip acc">field override</span>` : ''}</span>`)}</div>
+        <p class="hint muted">Edit per-role field overrides in the Access tab.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================================
+ * Rules tab
+ * ========================================================================== */
+const RULE_KINDS = {
+  requires: 'If field X is present, fields Y… must be present',
+  exclusive: 'At most one of the fields may be present',
+  atLeastOne: 'At least one of the fields must be present',
+  expr: 'Custom JsonLogic assertion',
+};
+function RulesTab({ t, updT, issues }) {
+  const rules = t.rules || [];
+  const upd = (i, fn) => updT(x => fn(x.rules[i], x));
+  const add = () => updT(x => {
+    x.rules = x.rules || [];
+    let n = x.rules.length + 1; while (x.rules.some(r => r.id === `rule_${n}`)) n++;
+    x.rules.push({ id: `rule_${n}`, kind: 'requires', if: '', then: [], message: '' });
+  });
+  const setKind = (i, k) => upd(i, r => {
+    for (const key of ['if', 'then', 'fields', 'assert']) delete r[key];
+    r.kind = k;
+    if (k === 'requires') { r.if = ''; r.then = []; }
+    if (k === 'exclusive' || k === 'atLeastOne') r.fields = [];
+    if (k === 'expr') { r.assert = true; r.fields = []; }
+  });
+  return html`<div style="max-width:980px">
+    <div class="toolbar"><span class="muted">Rules run on every write, in the browser and on the server. <b>requires</b>, <b>exclusive</b> and <b>atLeastOne</b> without a <code>when</code> also become SQL CHECK constraints, so direct inserts can't break them.</span>
+      <span class="spacer"></span><button class="btn" onClick=${add}>+ Add rule</button></div>
+    ${!rules.length && html`<div class="card empty">No cross-field rules yet.</div>`}
+    ${rules.map((r, i) => {
+      const sql = ruleCheckSql(t, r);
+      const iss = issues.filter(s => s.path === `rules[${i}]`);
+      return html`<div class="card rule-card" key=${i}>
+        <div class="card-h"><span class="mono">${r.id}</span><span class=${'chip ' + (sql ? 'ok' : 'acc')}>${sql ? 'DB CHECK + app' : 'app only'}</span>
+          ${iss.map(s => html`<span class=${'chip ' + (s.level === 'error' ? 'err' : 'warn')}>${s.code}</span>`)}
+          <span class="spacer"></span><button class="btn sm danger" onClick=${() => updT(x => x.rules.splice(i, 1))}>Delete</button></div>
+        <div class="card-b">
+          <div class="grid2">
+            <${Text} label="Rule id" mono value=${r.id} onChange=${v => upd(i, x => { x.id = v; })} />
+            <${Sel} label="Kind" value=${r.kind} options=${Object.keys(RULE_KINDS).map(k => [k, `${k}: ${RULE_KINDS[k]}`])} onChange=${v => setKind(i, v)} />
+          </div>
+          <div style="margin-top:10px">
+          ${r.kind === 'requires' && html`<div class="grid2">
+              <${Sel} label="If this field is present…" value=${r.if} options=${[['', '— choose —'], ...t.fields.filter(f => f.type !== 'id').map(f => f.name)]} onChange=${v => upd(i, x => { x.if = v; })} />
+              <label class="fld"><span class="l">…then these must be present</span><${FieldPicker} fields=${t.fields.filter(f => f.name !== r.if)} value=${r.then} onChange=${v => upd(i, x => { x.then = v; })} /></label>
+            </div>`}
+          ${(r.kind === 'exclusive' || r.kind === 'atLeastOne') && html`<label class="fld"><span class="l">Fields</span>
+              <${FieldPicker} fields=${t.fields} value=${r.fields} onChange=${v => upd(i, x => { x.fields = v; })} /></label>`}
+          ${r.kind === 'expr' && html`<div class="grid2">
+              <${JsonBox} label="Assert (must be truthy)" rows=${4} value=${r.assert} onChange=${v => upd(i, x => { x.assert = v ?? true; })} />
+              <label class="fld"><span class="l">Highlight fields on failure</span><${FieldPicker} fields=${t.fields} value=${r.fields} onChange=${v => upd(i, x => setOrDel(x, 'fields', v))} /></label>
+            </div>`}
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <${JsonBox} label="Only when (optional guard)" value=${r.when} onChange=${v => upd(i, x => setOrDel(x, 'when', v))} hint="A guarded rule is enforced by the app only" />
+            <${Text} label="Error message" value=${r.message} onChange=${v => upd(i, x => setOrDel(x, 'message', v))} />
+          </div>
+          ${sql && html`<div style="margin-top:10px"><div class="section-t">Generated check</div><pre class="code">CHECK (${sql})</pre></div>`}
+        </div></div>`;
+    })}
+  </div>`;
+}
+
+/* ============================================================================
+ * Actions tab
+ * ========================================================================== */
+function ActionsTab({ t, store, updT, mutate }) {
+  const actions = t.actions || [];
+  const [sel, setSel] = useState(0);
+  const a = actions[sel];
+  const upd = fn => updT(x => fn(x.actions[sel], x));
+  const add = () => {
+    let n = 1; while (actions.some(x => x.name === `action_${n}`)) n++;
+    const name = `action_${n}`, script = `${t.name}/${name}.js`;
+    mutate(s => {
+      const d = s.templates[t.name].draft;
+      d.actions = d.actions || [];
+      d.actions.push({ name, label: `Action ${n}`, placement: 'row', script, function: 'run', timeoutMs: 3000 });
+      if (s.scripts[script] == null) s.scripts[script] = `/**\n * Action: ${t.name}.${name}\n * @param {ActionContext} ctx\n * @returns {ActionResult}\n */\nfunction run(ctx) {\n  return { kind: "message", content: "Hello from ${name} for row " + (ctx.record ? ctx.record.id : "-") };\n}\n`;
+    });
+    setSel(actions.length);
+  };
+  const src = a ? store.scripts[a.script] : null;
+  const fnFound = a && src != null && new RegExp(`function\\s+${(a.function || '').replace(/[$]/g, '\\$')}\\s*\\(`).test(src);
+  return html`<div class="split" style="grid-template-columns:260px 1fr">
+    <div class="card"><div class="card-h">Actions<span class="spacer"></span><button class="btn sm" onClick=${add}>+ Add</button></div>
+      <table class="tbl"><tbody>${actions.map((x, i) => html`<tr key=${i} class=${'click' + (i === sel ? ' sel' : '')} onClick=${() => setSel(i)}>
+        <td><div style="font-weight:600">${x.label}</div><div class="mono muted" style="font-size:12px">${x.name} · ${x.placement}</div></td></tr>`)}</tbody></table>
+      ${!actions.length && html`<div class="empty">No actions</div>`}</div>
+    ${a ? html`<div class="card"><div class="card-h"><span class="mono">${a.name}</span><span class="spacer"></span>
+        <button class="btn sm danger" onClick=${() => { updT(x => x.actions.splice(sel, 1)); setSel(0); }}>Delete</button></div>
+      <div class="card-b">
+        <div class="grid2">
+          <${Text} label="Name" mono value=${a.name} onChange=${v => upd(x => { x.name = v; })} hint=${`Permission: run:${a.name}`} />
+          <${Text} label="Button label" value=${a.label} onChange=${v => upd(x => { x.label = v; })} />
+          <${Sel} label="Placement" value=${a.placement} options=${[['row', 'row: button on each row'], ['toolbar', 'toolbar: one button above the grid'], ['selection', 'selection: runs on selected rows']]} onChange=${v => upd(x => { x.placement = v; })} />
+          <${Num} label="Timeout (ms)" value=${a.timeoutMs} onChange=${v => upd(x => setOrDel(x, 'timeoutMs', v))} placeholder="3000" />
+          <${Sel} label="Script file (scripts/…)" value=${a.script} options=${Object.keys(store.scripts)} onChange=${v => upd(x => { x.script = v; })} />
+          <${Text} label="Function" mono value=${a.function} onChange=${v => upd(x => { x.function = v; })}
+            hint=${fnFound ? '✓ found in script' : '✗ not found in script'} />
+          <${Text} label="Confirmation prompt (optional)" value=${a.confirm} onChange=${v => upd(x => setOrDel(x, 'confirm', v))} />
+          <${Text} label="Icon" value=${a.icon} onChange=${v => upd(x => setOrDel(x, 'icon', v))} />
+        </div>
+        <div style="margin-top:10px"><${JsonBox} label="Visible when (per row)" value=${a.visibleWhen} onChange=${v => upd(x => setOrDel(x, 'visibleWhen', v))} /></div>
+        <div class="section" style="margin-top:14px"><div class="section-t">scripts/${a.script}
+          <span class=${'chip ' + (fnFound ? 'ok' : 'err')}>${fnFound ? `${a.function}() found` : `${a.function}() missing`}</span></div>
+          <textarea class="inp code" rows="18" spellcheck="false" value=${src ?? ''} onInput=${e => mutate(s => { s.scripts[a.script] = e.target.value; })} />
+          <p class="hint muted">The service loads every file under <code>scripts/</code> at startup and hot-reloads it on change. It runs in a GraalJS sandbox with no host access, IO or threads; <code>ctx</code> is the only bridge. Saving here writes the file.</p>
+        </div>
+      </div></div>` : html`<div class="card empty">Add an action to attach a JavaScript function to a button.</div>`}
+  </div>`;
+}
+
+/* ============================================================================
+ * Access tab
+ * ========================================================================== */
+const FIELD_PRESETS = [['inherit', 'inherit'], ['none', 'none'], ['read', 'read'], ['read,create', 'read + create'], ['read,update', 'read + update'], ['read,create,update', 'read + create + update']];
+function AccessTab({ t, store, updT }) {
+  const acc = accessOf(t);
+  const cols = [...TABLE_OPS, 'run:*', ...(t.actions || []).map(a => 'run:' + a.name)];
+  const toggle = (role, op) => updT(x => {
+    x.access = clone(accessOf(x));
+    const ops = new Set(x.access[role] || []);
+    ops.has(op) ? ops.delete(op) : ops.add(op);
+    x.access[role] = [...ops];
+  });
+  const setField = (fi, role, v) => updT(x => {
+    const f = x.fields[fi];
+    if (v === 'inherit') { if (f.access) { delete f.access[role]; if (!Object.keys(f.access).length) delete f.access; } return; }
+    f.access = f.access || {};
+    f.access[role] = v === 'none' ? [] : v.split(',');
+  });
+  const roles = store.roles.filter(r => r !== 'admin');
+  return html`<div style="max-width:1100px">
+    ${!t.access && html`<div class="banner info">No <code>access</code> block, so defaults apply: admin gets everything; viewer gets read${t.manageType === 'DATA_SOURCE' ? ' on nothing (DATA_SOURCE)' : ''}. Toggling any box writes an explicit block.</div>`}
+    <div class="card section"><div class="card-h">Table permissions</div>
+      <div style="overflow:auto"><table class="tbl matrix"><thead><tr><th>Role</th>${cols.map(c => html`<th class="mono">${c}</th>`)}</tr></thead>
+        <tbody>${store.roles.map(r => html`<tr key=${r}><td><span class="mono" style="font-weight:600">${r}</span>
+            ${r === 'admin' && html` <span class="chip">built-in, all</span>`}${r === 'viewer' && html` <span class="chip">default for every user</span>`}</td>
+          ${cols.map(c => html`<td><input type="checkbox" aria-label=${`${r} ${c}`} disabled=${r === 'admin'}
+            checked=${r === 'admin' || (acc[r] || []).includes(c)} onChange=${() => toggle(r, c)} /></td>`)}</tr>`)}
+        </tbody></table></div></div>
+    <div class="card"><div class="card-h">Field overrides <span class="muted" style="font-weight:400">: can only narrow table permissions; admin is never narrowed</span></div>
+      <div style="overflow:auto"><table class="tbl"><thead><tr><th>Field</th>${roles.map(r => html`<th class="mono">${r}</th>`)}</tr></thead>
+        <tbody>${t.fields.map((f, fi) => f.type === 'id' ? null : html`<tr key=${fi}><td class="mono">${f.name}</td>
+          ${roles.map(r => {
+            const explicit = f.access?.[r];
+            const val = explicit === undefined ? 'inherit' : explicit.length ? FIELD_OPS.filter(o => explicit.includes(o)).join(',') : 'none';
+            const eff = [...fieldOps(t, f, [r])].join(', ') || 'none';
+            return html`<td><select class="inp" style="min-width:150px" value=${val} onChange=${e => setField(fi, r, e.target.value)}>
+              ${FIELD_PRESETS.map(([v, l]) => html`<option value=${v}>${l}</option>`)}</select>
+              <div class="hint muted" style="font-size:11px">effective: ${eff}</div></td>`;
+          })}</tr>`)}</tbody></table></div></div>
+  </div>`;
+}
+
+/* ============================================================================
+ * View tab
+ * ========================================================================== */
+function ViewTab({ t, updT }) {
+  const v = t.view || {};
+  const setV = (k, val) => updT(x => { x.view = x.view || {}; setOrDel(x.view, k, val); if (!Object.keys(x.view).length) delete x.view; });
+  const cols = ordered(t.fields).filter(f => placementOf(f) === 'column');
+  const det = ordered(t.fields).filter(f => placementOf(f) === 'detail');
+  const sorts = v.defaultSort || [];
+  const fieldOpts = [...t.fields.map(f => f.name), ...AUDIT];
+  if (t.manageType === 'DATA_SOURCE') return html`<div class="banner">DATA_SOURCE templates get no generated UI. Only <b>titleField</b> matters: it is what lookups in other tables display.
+    <div style="max-width:320px;margin-top:10px"><${Sel} label="Title field" value=${v.titleField} options=${[['', '—'], ...t.fields.map(f => f.name)]} onChange=${x => setV('titleField', x)} /></div></div>`;
+  return html`<div class="split">
+    <div class="card"><div class="card-h">Grid settings</div><div class="card-b">
+      <div class="grid2">
+        <${Sel} label="Title field" value=${v.titleField} options=${[['', '—'], ...t.fields.map(f => f.name)]} onChange=${x => setV('titleField', x)} />
+        <${Sel} label="Page size" value=${String(v.pageSize || 25)} options=${['10', '25', '50', '100']} onChange=${x => setV('pageSize', Number(x))} />
+      </div>
+      <div class="section" style="margin-top:12px"><div class="section-t">Default sort</div>
+        ${sorts.map((s, i) => html`<div key=${i} style="display:flex;gap:8px;margin-bottom:6px">
+          <select class="inp" value=${s.field} onChange=${e => updT(x => { x.view.defaultSort[i].field = e.target.value; })}>${fieldOpts.map(n => html`<option value=${n}>${n}</option>`)}</select>
+          <select class="inp" style="width:110px" value=${s.dir || 'asc'} onChange=${e => updT(x => { x.view.defaultSort[i].dir = e.target.value; })}><option value="asc">asc</option><option value="desc">desc</option></select>
+          <button class="btn ghost sm" onClick=${() => updT(x => { x.view.defaultSort.splice(i, 1); if (!x.view.defaultSort.length) delete x.view.defaultSort; })}>✕</button></div>`)}
+        <button class="btn sm" onClick=${() => updT(x => { x.view = x.view || {}; x.view.defaultSort = [...(x.view.defaultSort || []), { field: x.fields[0].name, dir: 'asc' }]; })}>+ Sort key</button>
+      </div>
+      <div class="section"><div class="section-t">Free-text search fields</div>
+        <${FieldPicker} fields=${t.fields} value=${v.search} filter=${f => TYPES[f.type]?.str} onChange=${x => setV('search', x)} /></div>
+      <div class="section"><div class="section-t">Filter fields</div>
+        <${FieldPicker} fields=${t.fields} value=${v.filters} filter=${f => f.type !== 'json'} onChange=${x => setV('filters', x)} /></div>
+    </div></div>
+    <div class="card"><div class="card-h">Layout from field placement</div><div class="card-b">
+      <div class="section-t">Columns (row labels)</div>
+      <div class="pickers" style="margin-bottom:12px">${cols.map(f => html`<span class="chip acc">${f.label || f.name}</span>`)}</div>
+      <div class="section-t">Expanded row (details)</div>
+      <div class="pickers">${det.map(f => html`<span class="chip">${f.ui?.group ? f.ui.group + ' · ' : ''}${f.label || f.name}</span>`)}${!det.length && html`<span class="muted">none</span>`}</div>
+      <p class="hint muted">Reorder in the Fields tab. Set placement per field.</p>
+    </div></div>
+  </div>`;
+}
+
+/* ============================================================================
+ * Preview tab — the UI the service will generate
+ * ========================================================================== */
+function Widget({ f, value, onChange, disabled, store, invalid }) {
+  const cls = 'inp' + (invalid ? ' invalid' : '');
+  const ph = f.ui?.placeholder || '';
+  switch (widgetOf(f)) {
+    case 'textarea': return html`<textarea class=${cls} rows="3" disabled=${disabled} placeholder=${ph} value=${value ?? ''} onInput=${e => onChange(e.target.value === '' ? null : e.target.value)} />`;
+    case 'number': return html`<input class=${cls} type="number" step=${TYPES[f.type].int ? '1' : 'any'} disabled=${disabled} value=${value ?? ''}
+      onInput=${e => onChange(e.target.value === '' ? null : Number(e.target.value))} />`;
+    case 'switch': case 'checkbox': return html`<label class="chk"><input type="checkbox" disabled=${disabled} checked=${!!value} onChange=${e => onChange(e.target.checked)} />${value ? 'Yes' : 'No'}</label>`;
+    case 'date': return html`<input class=${cls} type="date" disabled=${disabled} value=${value ?? ''} onInput=${e => onChange(e.target.value || null)} />`;
+    case 'datetime': return html`<input class=${cls} type="datetime-local" disabled=${disabled} value=${value ? String(value).slice(0, 16) : ''} onInput=${e => onChange(e.target.value ? e.target.value + ':00Z' : null)} />`;
+    case 'time': return html`<input class=${cls} type="time" step="1" disabled=${disabled} value=${value ?? ''} onInput=${e => onChange(e.target.value || null)} />`;
+    case 'select': return html`<select class=${cls} disabled=${disabled} value=${value ?? ''} onChange=${e => onChange(e.target.value || null)}>
+      <option value="">— select —</option>${enumValues(f).map(e => html`<option value=${e.value}>${e.label || e.value}</option>`)}</select>`;
+    case 'radio': return html`<div class="pickers">${enumValues(f).map(e => html`<label class="chk"><input type="radio" name=${f.name} disabled=${disabled} checked=${value === e.value} onChange=${() => onChange(e.value)} />${e.label || e.value}</label>`)}</div>`;
+    case 'lookup': return html`<select class=${cls} disabled=${disabled} value=${value ?? ''} onChange=${e => onChange(e.target.value ? Number(e.target.value) : null)}>
+      <option value="">— select —</option>${(store.samples[f.ref?.target] || []).map(r => html`<option value=${r.id}>${r[f.ref.display]}</option>`)}</select>`;
+    case 'json': return html`<textarea class=${cls + ' code'} rows="3" disabled=${disabled} value=${value == null ? '' : typeof value === 'string' ? value : JSON.stringify(value)}
+      onInput=${e => { const s = e.target.value; try { onChange(s ? JSON.parse(s) : null); } catch { onChange(s); } }} />`;
+    default: return html`<input class=${cls} disabled=${disabled} placeholder=${ph} value=${value ?? ''} onInput=${e => onChange(e.target.value === '' ? null : e.target.value)} />`;
+  }
+}
+
+function RecordForm({ t, store, roles, user, rec, op, rows, onSave, onClose }) {
+  const [vals, setVals] = useState(() => {
+    if (op === 'update') return { ...rec };
+    const o = {};
+    for (const f of t.fields) {
+      if (f.default === undefined || f.type === 'id') continue;
+      if (typeof f.default === 'object' && f.default) o[f.name] = f.default.fn === 'now' ? new Date().toISOString().replace(/\.\d+Z$/, 'Z') : f.default.fn === 'today' ? new Date().toISOString().slice(0, 10) : f.default.fn === 'currentUser' ? user.username : null;
+      else o[f.name] = f.default;
+    }
+    return o;
+  });
+  const [tried, setTried] = useState(false);
+  const res = validateRecord(t, vals, op, user, rows);
+  const data = { ...vals, $op: op, $user: user };
+  const fields = ordered(t.fields).filter(f => f.type !== 'id' && fieldOps(t, f, roles).size);
+  const groups = [];
+  for (const f of fields) {
+    let vis = true;
+    if (f.ui?.visibleWhen) { try { vis = truthy(jl(f.ui.visibleWhen, data)); } catch { /* ignore */ } }
+    if (!vis) continue;
+    const g = f.ui?.group || '';
+    let grp = groups.find(x => x.name === g);
+    if (!grp) groups.push(grp = { name: g, fields: [] });
+    grp.fields.push(f);
+  }
+  const save = () => { setTried(true); if (res.ok) onSave(vals); };
+  return html`<div class="drawer-bg" onClick=${e => e.target === e.currentTarget && onClose()}>
+    <div class="drawer" role="dialog" aria-label="Edit record">
+      <div class="modal-h">${op === 'create' ? `New ${t.label || t.name} row` : `Edit ${textOf(t.fields.find(f => f.name === t.view?.titleField) || t.fields[0], vals[t.view?.titleField], store) || '#' + vals.id}`}
+        <span class="spacer"></span><button class="btn ghost" onClick=${onClose}>✕</button></div>
+      <div class="modal-b" style="flex:1">
+        ${groups.map(g => html`<div class="section">${g.name && html`<div class="section-t">${g.name}</div>`}
+          ${g.fields.map(f => {
+            const ops = fieldOps(t, f, roles);
+            let ro = !ops.has(op);
+            if (!ro && f.ui?.readonlyWhen) { try { ro = truthy(jl(f.ui.readonlyWhen, data)); } catch { /* ignore */ } }
+            let req = !!f.required;
+            if (!req && f.requiredWhen) { try { req = truthy(jl(f.requiredWhen, data)); } catch { /* ignore */ } }
+            const err = tried && res.errs[f.name];
+            return html`<label class="fld" style="margin-bottom:10px" key=${f.name}>
+              <span class="l">${f.label || f.name}${req && html`<span style="color:var(--danger)"> *</span>`}${ro && html` <span class="chip">read-only</span>`}</span>
+              <${Widget} f=${f} value=${vals[f.name]} disabled=${ro} store=${store} invalid=${!!err} onChange=${v => setVals(o => ({ ...o, [f.name]: v }))} />
+              ${err ? html`<span class="err-t">${err}</span>` : f.ui?.help && html`<span class="hint">${f.ui.help}</span>`}</label>`;
+          })}</div>`)}
+        ${tried && res.general.map(m => html`<div class="banner err">${m}</div>`)}
+      </div>
+      <div class="modal-f"><button class="btn" onClick=${onClose}>Cancel</button><button class="btn primary" onClick=${save}>${op === 'create' ? 'Create' : 'Save'}</button></div>
+    </div></div>`;
+}
+
+function Preview({ t, store, mutate, roleSel, setRoleSel, setModal, toast }) {
+  const roles = [...new Set([roleSel, 'viewer'])];
+  const user = { username: `demo_${roleSel}`, roles };
+  const rows = withSamples(t, store.samples[t.name] || [], store);
+  const v = t.view || {};
+  const [qText, setQ] = useState('');
+  const [flt, setFlt] = useState({});
+  const [sort, setSort] = useState(() => (v.defaultSort || [])[0] || null);
+  const [page, setPage] = useState(0);
+  const [open, setOpen] = useState({});
+  const [picked, setPicked] = useState([]);
+  const [edit, setEdit] = useState(null);
+  const fmap = Object.fromEntries(t.fields.map(f => [f.name, f]));
+  const reverse = Object.entries(store.templates).flatMap(([n, e]) => e.draft.fields.filter(f => f.type === 'ref' && f.ref?.target === t.name).map(f => `${n}.${f.name}`));
+  const api = html`<div class="card section"><div class="card-h">REST API (generated)</div><div class="card-b mono">
+    ${[['GET', `/api/data/${t.name}?page=0&size=${v.pageSize || 25}&sort=${sort ? sort.field + ',' + (sort.dir || 'asc') : 'id,asc'}&q=…&filter[field]=…`, 'read'],
+       ['GET', `/api/data/${t.name}/{id}`, 'read'], ['POST', `/api/data/${t.name}`, 'create'], ['PUT', `/api/data/${t.name}/{id}`, 'update'],
+       ['PATCH', `/api/data/${t.name}/{id}`, 'update'], ['DELETE', `/api/data/${t.name}/{id}`, 'delete'],
+       ...(t.actions || []).map(a => ['POST', `/api/data/${t.name}/${a.placement === 'row' ? '{id}/' : ''}actions/${a.name}`, 'run:' + a.name])]
+      .map(([m, p, op]) => html`<div class="endpoint"><b>${m}</b><span style="flex:1">${p}</span><span class=${'chip ' + (can(t, roles, op) ? 'ok' : '')}>${op}</span></div>`)}
+  </div></div>`;
+  const rolePick = html`<label class="chk">Preview as role
+    <select class="inp" style="width:auto" value=${roleSel} onChange=${e => setRoleSel(e.target.value)}>${store.roles.map(r => html`<option value=${r}>${r}</option>`)}</select></label>
+    <span class="muted">(+ viewer, which every user has)</span>`;
+
+  if (t.manageType === 'DATA_SOURCE') {
+    return html`<div>
+      <div class="banner">This is a <b>DATA_SOURCE</b>, so no end-user UI is generated. Rows are loaded directly into the table or through REST.
+        ${reverse.length ? html` Referenced by: ${reverse.map(r => html`<span class="chip acc mono" style="margin-left:4px">${r}</span>`)}` : ' Nothing references it yet.'}</div>
+      ${api}
+      <div class="card"><div class="card-h">Current rows <span class="muted" style="font-weight:400">: admin data browser, not generated for end users</span></div>
+        <div style="overflow:auto"><table class="tbl"><thead><tr>${t.fields.map(f => html`<th>${f.label || f.name}</th>`)}</tr></thead>
+          <tbody>${rows.map(r => html`<tr>${t.fields.map(f => html`<td><${Cell} f=${f} v=${r[f.name]} store=${store} /></td>`)}</tr>`)}</tbody></table></div></div>
+    </div>`;
+  }
+
+  if (!can(t, roles, 'read')) return html`<div><div class="toolbar">${rolePick}</div><div class="banner warn">Role <b>${roleSel}</b> cannot read <b>${t.name}</b>, so this table won't appear in their navigation.</div>${api}</div>`;
+
+  const columns = ordered(t.fields).filter(f => placementOf(f) === 'column' && fieldOps(t, f, roles).has('read'));
+  const details = ordered(t.fields).filter(f => placementOf(f) === 'detail' && fieldOps(t, f, roles).has('read'));
+  const rowActions = (t.actions || []).filter(a => a.placement === 'row' && can(t, roles, 'run:' + a.name));
+  const barActions = (t.actions || []).filter(a => a.placement !== 'row' && can(t, roles, 'run:' + a.name));
+  const selActions = barActions.filter(a => a.placement === 'selection');
+  const manage = t.manageType === 'MANAGE_VIEW';
+  const canC = manage && can(t, roles, 'create'), canU = manage && can(t, roles, 'update'), canD = manage && can(t, roles, 'delete');
+
+  const searchFields = (v.search?.length ? v.search : columns.filter(f => TYPES[f.type]?.str).map(f => f.name)).filter(n => fmap[n]);
+  let list = rows.filter(r => !qText || searchFields.some(n => String(r[n] ?? '').toLowerCase().includes(qText.toLowerCase())));
+  for (const [n, val] of Object.entries(flt)) {
+    if (!present(val) || !fmap[n]) continue;
+    const f = fmap[n];
+    list = list.filter(r => f.type === 'enum' || f.type === 'ref' || f.type === 'boolean' ? String(r[n]) === String(val)
+      : TYPES[f.type]?.temporal ? String(r[n] ?? '') >= val : String(r[n] ?? '').toLowerCase().includes(String(val).toLowerCase()));
+  }
+  if (sort && (fmap[sort.field] || AUDIT.includes(sort.field))) {
+    const f = fmap[sort.field] || { type: 'string' };
+    const key = r => f.type === 'ref' || f.type === 'enum' ? textOf(f, r[sort.field], store) : r[sort.field];
+    list = [...list].sort((a, b) => {
+      const x = key(a), y = key(b);
+      const c = x == null ? 1 : y == null ? -1 : typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
+      return sort.dir === 'desc' ? -c : c;
+    });
+  }
+  const size = v.pageSize || 25, pages = Math.max(1, Math.ceil(list.length / size)), pg = Math.min(page, pages - 1);
+  const pageRows = list.slice(pg * size, pg * size + size);
+
+  const exec = (a, record, records) => {
+    if (a.confirm && !confirm(a.confirm)) return;
+    try {
+      const out = runAction(a, t, store, record, records, user);
+      const r = out.result || {};
+      if (r.kind === 'text') setModal({ kind: 'result', action: a, out });
+      else if (r.kind === 'download' && out.files[0]) download(out.files[0].name, out.files[0].text, 'text/plain');
+      else toast(r.content || `${a.label} done (${out.ms} ms)`);
+    } catch (e) { toast(`Action ${a.name} failed: ${e.message}`); }
+  };
+  const saveRow = (vals, op) => mutate(s => {
+    const arr = s.samples[t.name] = withSamples(t, s.samples[t.name] || [], s);
+    if (op === 'create') arr.push({ ...vals, id: Math.max(0, ...arr.map(r => r.id)) + 1 });
+    else { const i = arr.findIndex(r => r.id === vals.id); arr[i] = vals; }
+  });
+  const colCount = columns.length + (details.length ? 1 : 0) + (selActions.length ? 1 : 0) + 2;
+
+  return html`<div>
+    <div class="toolbar">${rolePick}<span class="spacer"></span>
+      ${t.manageType === 'VIEW' && html`<span class="chip">VIEW: read-only grid; rows arrive via REST or direct insert</span>`}</div>
+    <div class="card section">
+      <div class="card-h" style="flex-wrap:wrap">${t.label || t.name}<span class="chip">${list.length} rows</span><span class="spacer"></span>
+        <input class="inp" style="width:220px" placeholder=${`Search ${searchFields.join(', ')}`} value=${qText} onInput=${e => { setQ(e.target.value); setPage(0); }} />
+        ${barActions.map(a => html`<button class="btn" disabled=${a.placement === 'selection' && !picked.length}
+          onClick=${() => exec(a, null, a.placement === 'selection' ? rows.filter(r => picked.includes(r.id)) : list)}>${a.label}</button>`)}
+        ${canC && html`<button class="btn primary" onClick=${() => setEdit({ op: 'create', rec: {} })}>+ New</button>`}
+      </div>
+      ${(v.filters || []).length > 0 && html`<div class="toolbar" style="padding:8px 14px 0">${v.filters.filter(n => fmap[n]).map(n => {
+        const f = fmap[n], val = flt[n] ?? '';
+        const set = x => { setFlt(o => ({ ...o, [n]: x })); setPage(0); };
+        const lbl = f.label || n;
+        if (f.type === 'enum') return html`<select class="inp" style="width:auto" value=${val} onChange=${e => set(e.target.value)}><option value="">${lbl}: all</option>${enumValues(f).map(e => html`<option value=${e.value}>${e.label || e.value}</option>`)}</select>`;
+        if (f.type === 'ref') return html`<select class="inp" style="width:auto" value=${val} onChange=${e => set(e.target.value)}><option value="">${lbl}: all</option>${(store.samples[f.ref.target] || []).map(r => html`<option value=${r.id}>${r[f.ref.display]}</option>`)}</select>`;
+        if (f.type === 'boolean') return html`<select class="inp" style="width:auto" value=${val} onChange=${e => set(e.target.value)}><option value="">${lbl}: all</option><option value="true">Yes</option><option value="false">No</option></select>`;
+        if (TYPES[f.type]?.temporal) return html`<label class="chk muted">${lbl} from <input class="inp" style="width:auto" type="date" value=${val} onInput=${e => set(e.target.value)} /></label>`;
+        return html`<input class="inp" style="width:160px" placeholder=${lbl + ' contains'} value=${val} onInput=${e => set(e.target.value)} />`;
+      })}${Object.values(flt).some(present) && html`<button class="btn ghost sm" onClick=${() => setFlt({})}>Clear filters</button>`}</div>`}
+      <div style="overflow:auto;margin-top:8px"><table class="tbl">
+        <thead><tr>
+          ${details.length > 0 && html`<th style="width:30px"></th>`}
+          ${selActions.length > 0 && html`<th style="width:30px"><input type="checkbox" aria-label="Select page" checked=${pageRows.length && pageRows.every(r => picked.includes(r.id))}
+            onChange=${e => setPicked(e.target.checked ? [...new Set([...picked, ...pageRows.map(r => r.id)])] : picked.filter(id => !pageRows.some(r => r.id === id)))} /></th>`}
+          ${columns.map(f => html`<th class="sortable" style=${f.ui?.width ? `width:${f.ui.width}px` : ''}
+            onClick=${() => setSort(s => s?.field === f.name ? { field: f.name, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { field: f.name, dir: 'asc' })}>
+            ${f.label || f.name}${sort?.field === f.name ? (sort.dir === 'desc' ? ' ▼' : ' ▲') : ''}</th>`)}
+          <th style="width:24px"></th><th></th></tr></thead>
+        <tbody>${pageRows.map(r => {
+          const chk = validateRecord(t, r, 'update', user);
+          const isOpen = open[r.id];
+          const data = { ...r, $op: 'update', $user: user };
+          const acts = rowActions.filter(a => { if (!a.visibleWhen) return true; try { return truthy(jl(a.visibleWhen, data)); } catch { return false; } });
+          const groups = {};
+          details.forEach(f => (groups[f.ui?.group || ''] = groups[f.ui?.group || ''] || []).push(f));
+          return html`
+            <tr key=${r.id} class=${details.length ? 'click' : ''} onClick=${() => details.length && setOpen(o => ({ ...o, [r.id]: !o[r.id] }))}>
+              ${details.length > 0 && html`<td class="muted">${isOpen ? '▾' : '▸'}</td>`}
+              ${selActions.length > 0 && html`<td onClick=${e => e.stopPropagation()}><input type="checkbox" aria-label="Select row" checked=${picked.includes(r.id)}
+                onChange=${e => setPicked(p => e.target.checked ? [...p, r.id] : p.filter(x => x !== r.id))} /></td>`}
+              ${columns.map(f => html`<td class=${TYPES[f.type]?.num ? 'num' : ''}><${Cell} f=${f} v=${r[f.name]} store=${store} /></td>`)}
+              <td>${!chk.ok && html`<span class="flag" title=${['Row breaks app-level rules (inserted directly?):', ...Object.entries(chk.errs).map(([k, m]) => `${k}: ${m}`), ...chk.general].join('\n')}>⚠</span>`}</td>
+              <td style="white-space:nowrap;text-align:right" onClick=${e => e.stopPropagation()}>
+                ${acts.map(a => html`<button class="btn sm" style="margin-left:4px" onClick=${() => exec(a, r)}>${a.label}</button>`)}
+                ${canU && html`<button class="btn sm" style="margin-left:4px" onClick=${() => setEdit({ op: 'update', rec: r })}>Edit</button>`}
+                ${canD && html`<button class="btn sm danger" style="margin-left:4px" onClick=${() => confirm('Delete this row?') && mutate(s => { s.samples[t.name] = (s.samples[t.name] || []).filter(x => x.id !== r.id); })}>Delete</button>`}
+              </td></tr>
+            ${isOpen && html`<tr key=${r.id + '-d'}><td colspan=${colCount} style="background:var(--panel-2)">
+              <dl class="detail">${Object.entries(groups).map(([g, fs]) => html`
+                ${g && html`<div class="dgroup">${g}</div>`}
+                ${fs.map(f => html`<div><dt>${f.label || f.name}</dt><dd><${Cell} f=${f} v=${r[f.name]} store=${store} /></dd></div>`)}`)}
+              </dl></td></tr>`}`;
+        })}
+        ${!pageRows.length && html`<tr><td colspan=${colCount} class="empty">No rows match</td></tr>`}</tbody></table></div>
+      <div class="pager" style="padding:8px 14px">Page ${pg + 1} / ${pages}
+        <button class="btn sm" disabled=${pg === 0} onClick=${() => setPage(pg - 1)}>‹</button><button class="btn sm" disabled=${pg >= pages - 1} onClick=${() => setPage(pg + 1)}>›</button></div>
+    </div>
+    ${api}
+    ${edit && html`<${RecordForm} t=${t} store=${store} roles=${roles} user=${user} rec=${edit.rec} op=${edit.op} rows=${rows}
+      onClose=${() => setEdit(null)} onSave=${vals => { saveRow(vals, edit.op); setEdit(null); toast(edit.op === 'create' ? 'Row created' : 'Row saved'); }} />`}
+  </div>`;
+}
+
+/* ============================================================================
+ * DDL, JSON tabs
+ * ========================================================================== */
+const CLS_CHIP = { safe: 'ok', metadata: '', checked: 'warn', destructive: 'err', blocked: 'err' };
+function PlanList({ steps }) {
+  if (!steps.length) return html`<div class="muted">No changes since the published version.</div>`;
+  return html`<div>${steps.map(s => html`<div class="step"><span class="cls"><span class=${'chip ' + CLS_CHIP[s.cls]}>${s.cls}</span></span><span>${s.text}</span></div>`)}
+    ${needsRebuild(steps) && html`<p class="hint muted">SQLite can't ALTER constraints, so these changes rebuild the table in one transaction (create new → copy → drop → rename).</p>`}</div>`;
+}
+function DdlTab({ t, entry, toast }) {
+  const steps = planMigration(entry.published, t);
+  const sl = genDDL(t, 'sqlite'), pg = genDDL(t, 'pg');
+  return html`<div>
+    <div class="card section"><div class="card-h">Migration plan <span class="muted" style="font-weight:400">: draft vs ${entry.published ? 'published v' + entry.version : 'nothing (new table)'}</span></div>
+      <div class="card-b"><${PlanList} steps=${steps} /></div></div>
+    <div class="split" style="grid-template-columns:1fr 1fr">
+      ${[['SQLite (local dev)', sl], ['PostgreSQL', pg]].map(([title, sql]) => html`<div class="card"><div class="card-h">${title}<span class="spacer"></span>
+        <button class="btn sm" onClick=${() => copy(sql).then(() => toast('DDL copied'))}>Copy</button></div>
+        <div class="card-b"><pre class="code">${sql}</pre></div></div>`)}
+    </div></div>`;
+}
+function JsonTab({ t, store, mutate, sel, toast }) {
+  const [text, setText] = useState(() => exportJson(t));
+  const [err, setErr] = useState(null);
+  const dirty = text !== exportJson(t);
+  useEffect(() => { setText(exportJson(t)); setErr(null); }, [stable(t)]);
+  const apply = () => {
+    try {
+      const obj = JSON.parse(text); delete obj.$schema;
+      if (obj.name !== sel) throw new Error(`"name" must stay "${sel}". Use Import to create a different template`);
+      if (!Array.isArray(obj.fields)) throw new Error('"fields" must be an array');
+      mutate(s => { s.templates[sel].draft = obj; });
+      setErr(null); toast('Draft updated from JSON');
+    } catch (e) { setErr(e.message); }
+  };
+  return html`<div>
+    <div class="toolbar"><span class="muted">The template document. Validated against <code>schema/tds-template.schema.json</code> (JSON Schema 2020-12) and then by the semantic checks.</span><span class="spacer"></span>
+      <button class="btn" disabled=${!dirty} onClick=${() => { setText(exportJson(t)); setErr(null); }}>Revert</button>
+      <button class="btn primary" disabled=${!dirty} onClick=${apply}>Apply to draft</button></div>
+    ${err && html`<div class="banner err">${err}</div>`}
+    <textarea class="inp code" spellcheck="false" style="min-height:62vh" value=${text} onInput=${e => setText(e.target.value)} />
+  </div>`;
+}
+
+/* ============================================================================
+ * Modals
+ * ========================================================================== */
+function PublishModal({ entry, t, issues, onPublish, onClose }) {
+  const steps = planMigration(entry.published, t);
+  const errors = issues.filter(i => i.level === 'error');
+  const blocked = steps.some(s => s.cls === 'blocked');
+  const destructive = steps.some(s => s.cls === 'destructive');
+  const [typed, setTyped] = useState('');
+  const ok = !errors.length && !blocked && steps.length > 0 && (!destructive || typed === t.name);
+  return html`<${Modal} title=${`Publish ${t.name} as v${(entry.version || 0) + 1}`} onClose=${onClose} wide
+    footer=${html`<button class="btn" onClick=${onClose}>Cancel</button><button class="btn primary" disabled=${!ok} onClick=${() => onPublish(steps)}>Apply & publish</button>`}>
+    ${errors.length > 0 && html`<div class="banner err"><b>${errors.length} validation error(s)</b> must be fixed first:<ul style="margin:6px 0 0">${errors.map(e => html`<li><code>${e.code}</code> ${e.msg}</li>`)}</ul></div>`}
+    ${blocked && html`<div class="banner err">The plan has a blocked step.</div>`}
+    <div class="section-t">Migration plan</div>
+    <${PlanList} steps=${steps} />
+    ${destructive && html`<div class="banner warn" style="margin-top:12px">This plan loses data. Type <b class="mono">${t.name}</b> to confirm.
+      <input class="inp mono" style="margin-top:6px" value=${typed} onInput=${e => setTyped(e.target.value)} /></div>`}
+    <p class="hint muted">The service runs the plan in one transaction, pre-checks existing rows for <b>checked</b> steps, stores the JSON and DDL as a new version in <code>tds_template_version</code>, and then regenerates the REST and UI metadata. No restart needed.</p>
+  <//>`;
+}
+function NewTemplateModal({ store, onCreate, onClose }) {
+  const [name, setName] = useState('');
+  const [label, setLabel] = useState('');
+  const [mt, setMt] = useState('MANAGE_VIEW');
+  const err = !name ? null : !NAME_RE.test(name) || name.startsWith('tds_') ? 'snake_case, must not start with tds_' : store.templates[name] ? 'already exists' : null;
+  return html`<${Modal} title="New template" onClose=${onClose}
+    footer=${html`<button class="btn" onClick=${onClose}>Cancel</button><button class="btn primary" disabled=${!name || err} onClick=${() => onCreate(name, label, mt)}>Create draft</button>`}>
+    <div class="grid2">
+      <${Text} label="Table name" mono value=${name} onChange=${setName} placeholder="e.g. jackpot_limits" hint=${err ? html`<span class="err-t">${err}</span>` : 'Immutable after first publish'} />
+      <${Text} label="Label" value=${label} onChange=${setLabel} placeholder="Jackpot Limits" />
+    </div>
+    <div class="section-t" style="margin-top:14px">Manage type</div>
+    ${Object.entries(MANAGE_TYPES).map(([k, d]) => html`<label class="chk" style="display:flex;margin-bottom:6px"><input type="radio" name="mt" checked=${mt === k} onChange=${() => setMt(k)} />
+      <span class=${'mt ' + k}>${k}</span><span class="muted">${d}</span></label>`)}
+  <//>`;
+}
+function RolesModal({ store, mutate, onClose }) {
+  const [n, setN] = useState('');
+  const err = n && (!ROLE_RE.test(n) ? 'lower_snake_case' : store.roles.includes(n) ? 'exists' : null);
+  const usage = r => Object.entries(store.templates).filter(([, e]) => e.draft.access?.[r] || e.draft.fields.some(f => f.access?.[r])).map(([k]) => k);
+  return html`<${Modal} title="Roles" onClose=${onClose} footer=${html`<button class="btn" onClick=${onClose}>Close</button>`}>
+    <p class="muted" style="margin-top:0">Roles are managed separately from templates; templates only reference them by name. Admins assign roles to users in the admin console (next phase). Every user implicitly has <b>viewer</b>.</p>
+    <table class="tbl"><thead><tr><th>Role</th><th>Used by</th><th></th></tr></thead><tbody>
+      ${store.roles.map(r => html`<tr><td class="mono">${r}${BUILTIN_ROLES.includes(r) && html` <span class="chip">built-in</span>`}</td>
+        <td>${usage(r).map(u => html`<span class="chip" style="margin-right:4px">${u}</span>`)}</td>
+        <td>${!BUILTIN_ROLES.includes(r) && html`<button class="btn sm danger" disabled=${usage(r).length > 0} title=${usage(r).length ? 'Remove from templates first' : ''}
+          onClick=${() => mutate(s => { s.roles = s.roles.filter(x => x !== r); })}>Remove</button>`}</td></tr>`)}
+    </tbody></table>
+    <div style="display:flex;gap:8px;margin-top:12px;align-items:flex-start">
+      <div style="flex:1"><${Text} label="New role" mono value=${n} onChange=${setN} placeholder="e.g. operator_lead" hint=${err && html`<span class="err-t">${err}</span>`} /></div>
+      <button class="btn primary" style="margin-top:20px" disabled=${!n || err} onClick=${() => { mutate(s => { s.roles.push(n); }); setN(''); }}>Add</button></div>
+  <//>`;
+}
+function ResultModal({ action, out, onClose }) {
+  const r = out.result, file = out.files[0];
+  return html`<${Modal} title=${r.title || action.label} onClose=${onClose} wide
+    footer=${html`${file && html`<button class="btn" onClick=${() => download(file.name, file.text, 'text/plain')}>Download ${file.name}</button>`}
+      <button class="btn primary" onClick=${() => copy(r.content)}>Copy</button>`}>
+    <div class="muted" style="margin-bottom:8px">Ran <code>${action.script}#${action.function}</code> in ${out.ms} ms${file ? html`; server would write <code>data/action-output/…/${file.name}</code>` : ''}.</div>
+    <pre class="code" style="white-space:pre-wrap">${r.content}</pre>
+  <//>`;
+}
+
+/* ============================================================================
+ * App shell
+ * ========================================================================== */
+function statusOf(e) {
+  if (!e.published) return { cls: 'draft', text: 'Draft, never published' };
+  return same(e.published, e.draft) ? { cls: 'pub', text: `Published v${e.version}` } : { cls: 'chg', text: `v${e.version} + unpublished changes` };
+}
+function App() {
+  const [store, setStore] = useState(loadStore);
+  const names = Object.keys(store.templates).sort();
+  const [sel, setSel] = useState(names.includes('alerts') ? 'alerts' : names[0]);
+  const [tab, setTab] = useState('fields');
+  const [fieldIdx, setFieldIdx] = useState(1);
+  const [modal, setModal] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null);
+  const [roleSel, setRoleSel] = useState('viewer');
+  const [showIssues, setShowIssues] = useState(true);
+  const mutate = fn => setStore(s => { const n = clone(s); fn(n); saveStore(n); return n; });
+  const toast = m => { setToastMsg(m); clearTimeout(window.__tt); window.__tt = setTimeout(() => setToastMsg(null), 2600); };
+  const entry = store.templates[sel];
+  const t = entry?.draft;
+  const updT = fn => mutate(s => fn(s.templates[sel].draft, s));
+  const issues = useMemo(() => t ? validateTemplate(t, store) : [], [store, sel]);
+  const allIssues = useMemo(() => Object.fromEntries(names.map(n => [n, validateTemplate(store.templates[n].draft, store)])), [store]);
+  const errCount = issues.filter(i => i.level === 'error').length, warnCount = issues.length - errCount;
+  const select = n => { setSel(n); setFieldIdx(1); };
+
+  const publish = steps => {
+    mutate(s => {
+      const e = s.templates[sel];
+      const d = e.draft;
+      const pubNames = new Set((e.published?.fields || []).map(f => f.name));
+      s.samples[sel] = (s.samples[sel] || []).map(r => {
+        const o = { ...r };
+        for (const f of d.fields) if (f.renamedFrom && f.renamedFrom in o) { o[f.name] = o[f.renamedFrom]; delete o[f.renamedFrom]; }
+        for (const k of Object.keys(o)) if (k !== 'id' && !d.fields.some(f => f.name === k) && pubNames.has(k)) delete o[k];
+        return o;
+      });
+      d.fields.forEach(f => delete f.renamedFrom);
+      e.published = clone(d);
+      e.version = (e.version || 0) + 1;
+      e.history = [{ version: e.version, at: new Date().toISOString(), by: 'you', note: `${steps.length} change(s)` }, ...(e.history || [])];
+    });
+    setModal(null); toast(`${sel} published`);
+  };
+  const create = (name, label, mt) => {
+    mutate(s => {
+      s.templates[name] = { draft: { grammar: 'tds/v1', name, label: label || name, manageType: mt,
+        fields: [{ name: 'id', type: 'id', ui: { placement: 'hidden' } }],
+        access: { admin: ['read', 'create', 'update', 'delete', 'run:*'], viewer: mt === 'DATA_SOURCE' ? [] : ['read'] },
+        view: { pageSize: 25 } }, published: null, version: 0, history: [] };
+      s.samples[name] = [];
+    });
+    setModal(null); setSel(name); setTab('fields'); setFieldIdx(0);
+  };
+  const importFile = e => {
+    const file = e.target.files[0]; if (!file) return;
+    file.text().then(txt => {
+      try {
+        const obj = JSON.parse(txt); delete obj.$schema;
+        if (!obj.name || !Array.isArray(obj.fields)) throw new Error('not a tds/v1 template');
+        mutate(s => {
+          if (s.templates[obj.name]) s.templates[obj.name].draft = obj;
+          else { s.templates[obj.name] = { draft: obj, published: null, version: 0, history: [] }; s.samples[obj.name] = []; }
+        });
+        setSel(obj.name); toast(`Imported ${obj.name} as draft`);
+      } catch (err) { toast('Import failed: ' + err.message); }
+    });
+    e.target.value = '';
+  };
+  const gotoIssue = i => {
+    const m = /^(fields|rules|actions|indexes)\[(\d+)\]/.exec(i.path || '');
+    if (m?.[1] === 'fields') { setTab('fields'); setFieldIdx(Number(m[2])); }
+    else if (m?.[1] === 'rules') setTab('rules');
+    else if (m?.[1] === 'actions') setTab('actions');
+    else if (m?.[1] === 'indexes') setTab('json');
+    else if (i.path === 'access') setTab('access');
+    else if (i.path === 'view') setTab('view');
+    else setTab('json');
+  };
+
+  const st = entry && statusOf(entry);
+  const TABS = [['fields', 'Fields', t?.fields.length], ['rules', 'Rules', t?.rules?.length], ['actions', 'Actions', t?.actions?.length], ['access', 'Access'],
+    ['view', 'View'], ['preview', 'Preview'], ['ddl', 'DDL & Plan'], ['json', 'JSON']];
+
+  return html`<div class="app">
+    <header class="topbar">
+      <div class="brand">TDS <span>· Schema Studio</span></div>
+      <nav class="topnav"><button class="on">Templates</button><button onClick=${() => setModal({ kind: 'roles' })}>Roles</button>
+        <button disabled title="Next phase">Users</button></nav>
+      <span class="spacer"></span>
+      <span class="chip">prototype · data stays in this browser</span>
+      <button class="btn sm" onClick=${() => { if (confirm('Reset all templates, scripts and sample rows to the repository seeds?')) { const s = initStore(); saveStore(s); setStore(s); setSel('alerts'); } }}>Reset demo</button>
+    </header>
+    <div class="body">
+      <aside class="sidebar">
+        <div class="side-head"><button class="btn primary" style="flex:1" onClick=${() => setModal({ kind: 'new' })}>+ New template</button>
+          <label class="btn" title="Import a template JSON file">Import<input type="file" accept=".json,application/json" style="display:none" onChange=${importFile} /></label></div>
+        <div class="tlist">${names.map(n => {
+          const e = store.templates[n], s = statusOf(e), errs = allIssues[n].filter(i => i.level === 'error').length;
+          return html`<button class=${'titem' + (n === sel ? ' on' : '')} onClick=${() => select(n)}>
+            <div class="row1"><span class=${'dot ' + s.cls}></span>${e.draft.label || n}<span class="spacer"></span><span class=${'mt ' + e.draft.manageType}>${e.draft.manageType.replace('_', ' ')}</span></div>
+            <div class="row2"><span class="mono">${n}</span>·<span>${s.text}</span>${errs > 0 && html`<span class="chip err">${errs}</span>`}</div></button>`;
+        })}</div>
+      </aside>
+      ${t ? html`<main class="main">
+        <div class="thead">
+          <div class="thead-row">
+            <h1>${t.label || t.name}</h1><span class="mono muted">${t.name}</span>
+            <span class=${'chip ' + (st.cls === 'pub' ? 'ok' : st.cls === 'chg' ? 'warn' : '')}>${st.text}</span>
+            <span class="spacer"></span>
+            <button class=${'chip ' + (errCount ? 'err' : warnCount ? 'warn' : 'ok')} style="cursor:pointer" onClick=${() => setShowIssues(x => !x)}>
+              ${errCount ? `${errCount} error${errCount > 1 ? 's' : ''}` : 'valid'}${warnCount ? ` · ${warnCount} warning${warnCount > 1 ? 's' : ''}` : ''}</button>
+            ${!entry.published && html`<button class="btn danger" onClick=${() => { if (confirm(`Delete draft ${sel}?`)) { mutate(s => { delete s.templates[sel]; delete s.samples[sel]; }); setSel(names.find(n => n !== sel)); } }}>Delete draft</button>`}
+            <button class="btn" onClick=${() => download(`${t.name}.json`, exportJson(t))}>Export JSON</button>
+            <button class="btn primary" onClick=${() => setModal({ kind: 'publish' })} disabled=${st.cls === 'pub'}>Publish…</button>
+          </div>
+          <div class="thead-row sub" style="margin-top:8px">
+            <span class="muted">Manage type</span>
+            <div class="seg">${Object.keys(MANAGE_TYPES).map(k => html`<button class=${t.manageType === k ? 'on' : ''} title=${MANAGE_TYPES[k]} onClick=${() => updT(x => { x.manageType = k; })}>${k}</button>`)}</div>
+            <span class="muted">${MANAGE_TYPES[t.manageType]}</span>
+          </div>
+          <div class="grid2" style="max-width:820px;margin-bottom:6px">
+            <${Text} label="Label" value=${t.label} onChange=${v => updT(x => setOrDel(x, 'label', v))} />
+            <${Text} label="Description" value=${t.description} onChange=${v => updT(x => setOrDel(x, 'description', v))} />
+          </div>
+          <nav class="tabs">${TABS.map(([k, l, c]) => html`<button class=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l}${c != null && html`<span class="cnt">${c}</span>`}</button>`)}</nav>
+        </div>
+        <section class="content">
+          ${tab === 'fields' && html`<${FieldsTab} t=${t} entry=${entry} store=${store} updT=${updT} idx=${Math.min(fieldIdx, t.fields.length - 1)} setIdx=${setFieldIdx} issues=${issues} />`}
+          ${tab === 'rules' && html`<${RulesTab} t=${t} updT=${updT} issues=${issues} />`}
+          ${tab === 'actions' && html`<${ActionsTab} key=${sel} t=${t} store=${store} updT=${updT} mutate=${mutate} />`}
+          ${tab === 'access' && html`<${AccessTab} t=${t} store=${store} updT=${updT} />`}
+          ${tab === 'view' && html`<${ViewTab} t=${t} updT=${updT} />`}
+          ${tab === 'preview' && html`<${Preview} key=${sel} t=${t} store=${store} mutate=${mutate} roleSel=${roleSel} setRoleSel=${setRoleSel} setModal=${setModal} toast=${toast} />`}
+          ${tab === 'ddl' && html`<${DdlTab} t=${t} entry=${entry} toast=${toast} />`}
+          ${tab === 'json' && html`<${JsonTab} key=${sel} t=${t} store=${store} mutate=${mutate} sel=${sel} toast=${toast} />`}
+        </section>
+        ${issues.length > 0 && html`<div class="issues">
+          <div class="issues-h" onClick=${() => setShowIssues(x => !x)}>${showIssues ? '▾' : '▸'} Validation
+            ${errCount > 0 && html`<span class="chip err">${errCount} error${errCount > 1 ? 's' : ''}</span>`}${warnCount > 0 && html`<span class="chip warn">${warnCount} warning${warnCount > 1 ? 's' : ''}</span>`}</div>
+          ${showIssues && issues.map(i => html`<div class=${'issue ' + i.level} onClick=${() => gotoIssue(i)}><span class="code">${i.code}</span><span>${i.msg}</span></div>`)}
+        </div>`}
+      </main>` : html`<main class="main"><div class="empty">No template selected</div></main>`}
+    </div>
+    ${modal?.kind === 'publish' && html`<${PublishModal} entry=${entry} t=${t} issues=${issues} onPublish=${publish} onClose=${() => setModal(null)} />`}
+    ${modal?.kind === 'new' && html`<${NewTemplateModal} store=${store} onCreate=${create} onClose=${() => setModal(null)} />`}
+    ${modal?.kind === 'roles' && html`<${RolesModal} store=${store} mutate=${mutate} onClose=${() => setModal(null)} />`}
+    ${modal?.kind === 'result' && html`<${ResultModal} action=${modal.action} out=${modal.out} onClose=${() => setModal(null)} />`}
+    ${toastMsg && html`<div class="toast" role="status">${toastMsg}</div>`}
+  </div>`;
+}
+
+render(html`<${App} />`, document.getElementById('app'));
+</script>
+</body>
+</html>

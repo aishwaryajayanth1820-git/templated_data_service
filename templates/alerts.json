@@ -1,0 +1,111 @@
+{
+  "$schema": "../schema/tds-template.schema.json",
+  "grammar": "tds/v1",
+  "name": "alerts",
+  "label": "Alerts",
+  "description": "Operational alerts raised by monitoring. Rows are inserted by external processes; users view them and raise tickets.",
+  "manageType": "VIEW",
+  "options": { "audit": true, "optimisticLock": true },
+  "fields": [
+    { "name": "id", "type": "id", "ui": { "placement": "hidden" } },
+    {
+      "name": "alert_date",
+      "label": "Date",
+      "type": "datetime",
+      "required": true,
+      "default": { "fn": "now" },
+      "ui": { "placement": "column", "widget": "datetime", "width": 170, "format": "yyyy-MM-dd HH:mm" }
+    },
+    {
+      "name": "alert_name",
+      "label": "Alert",
+      "type": "string",
+      "length": 255,
+      "required": true,
+      "constraints": { "notBlank": true },
+      "ui": { "placement": "column", "width": 280 }
+    },
+    {
+      "name": "alert_type",
+      "label": "Type",
+      "type": "enum",
+      "values": [
+        { "value": "CRITICAL", "label": "Critical", "color": "red" },
+        { "value": "MAJOR", "label": "Major", "color": "orange" },
+        { "value": "MINOR", "label": "Minor", "color": "yellow" },
+        { "value": "INFO", "label": "Info", "color": "blue" }
+      ],
+      "required": true,
+      "default": "INFO",
+      "ui": { "placement": "column", "widget": "select", "width": 110 }
+    },
+    {
+      "name": "alert_group",
+      "label": "Group",
+      "type": "ref",
+      "ref": { "target": "alert_groups", "display": "alert_group_name", "onDelete": "RESTRICT" },
+      "required": true,
+      "ui": { "placement": "column", "widget": "lookup", "width": 160 }
+    },
+    {
+      "name": "alert_source",
+      "label": "Source",
+      "type": "text",
+      "ui": { "placement": "detail", "group": "Origin" }
+    },
+    {
+      "name": "alert_site",
+      "label": "Site",
+      "type": "text",
+      "ui": { "placement": "detail", "group": "Origin" }
+    },
+    {
+      "name": "alert_description",
+      "label": "Description",
+      "type": "text",
+      "requiredWhen": { "==": [{ "var": "alert_type" }, "CRITICAL"] },
+      "ui": { "placement": "detail", "widget": "textarea", "group": "Details", "help": "Required for CRITICAL alerts." }
+    },
+    {
+      "name": "alert_ticket",
+      "label": "Ticket",
+      "type": "text",
+      "ui": { "placement": "detail", "group": "Details", "placeholder": "e.g. OPS-1234" }
+    }
+  ],
+  "indexes": [
+    { "name": "ix_alerts_date", "fields": ["alert_date"] }
+  ],
+  "rules": [
+    {
+      "id": "ticket_needs_site",
+      "kind": "requires",
+      "if": "alert_ticket",
+      "then": ["alert_site"],
+      "message": "An alert with a ticket must also have a site."
+    }
+  ],
+  "actions": [
+    {
+      "name": "create_ticket",
+      "label": "Create ticket",
+      "icon": "ticket",
+      "placement": "row",
+      "script": "alerts/create_ticket.js",
+      "function": "createTicket",
+      "visibleWhen": { "!": { "present": [{ "var": "alert_ticket" }] } },
+      "timeoutMs": 3000
+    }
+  ],
+  "access": {
+    "admin": ["read", "create", "update", "delete", "run:*"],
+    "viewer": ["read", "run:create_ticket"]
+  },
+  "view": {
+    "titleField": "alert_name",
+    "defaultSort": [{ "field": "alert_date", "dir": "desc" }],
+    "pageSize": 25,
+    "search": ["alert_name", "alert_source", "alert_site", "alert_description"],
+    "filters": ["alert_type", "alert_group", "alert_date"]
+  }
+}
