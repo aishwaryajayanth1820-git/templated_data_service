@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 640" width="1400" height="640" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="640" fill="#ffffff"/>
+  <text x="40" y="54" font-size="30" font-weight="700" fill="#111827">One rule, enforced in three places</text>
+  <text x="40" y="88" font-size="17" fill="#6b7280">“If an alert has a ticket, it must also have a site.” Written once in the template.</text>
+
+  <rect x="40" y="120" width="1320" height="92" rx="14" fill="#1e293b"/>
+  <text x="70" y="160" font-size="19" fill="#e2e8f0" font-family="Cascadia Code, Consolas, Menlo, monospace">{ "id": "ticket_needs_site", "kind": "requires",</text>
+  <text x="90.9" y="190" font-size="19" fill="#e2e8f0" font-family="Cascadia Code, Consolas, Menlo, monospace">"if": "alert_ticket", "then": ["alert_site"], "message": "An alert with a ticket must also have a site." }</text>
+
+  <line x1="250" y1="214" x2="250" y2="262" stroke="#475569" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="700" y1="214" x2="700" y2="262" stroke="#475569" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="1150" y1="214" x2="1150" y2="262" stroke="#475569" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <g font-size="16">
+    <rect x="40" y="268" width="420" height="250" rx="16" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="64" y="306" font-size="22" font-weight="700" fill="#5b21b6">1 · Browser</text>
+    <text x="64" y="340" fill="#4c1d95">Instant feedback while typing</text>
+    <text x="64" y="366" fill="#4c1d95">JsonLogic evaluator in TypeScript</text>
+    <text x="64" y="392" fill="#4c1d95">Also drives visibleWhen / readonlyWhen</text>
+    <text x="64" y="418" fill="#4c1d95">and requiredWhen in generated forms</text>
+    <text x="64" y="494" font-size="14" fill="#6d28d9">convenience, not trusted</text>
+
+    <rect x="490" y="268" width="420" height="250" rx="16" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+    <text x="514" y="306" font-size="22" font-weight="700" fill="#92400e">2 · Server</text>
+    <text x="514" y="340" fill="#78350f">Authoritative check on every write</text>
+    <text x="514" y="366" fill="#78350f">JsonLogic evaluator in Java</text>
+    <text x="514" y="392" fill="#78350f">422 with per-field messages</text>
+    <text x="514" y="418" fill="#78350f">Same 28 parity test cases as the browser</text>
+    <text x="514" y="494" font-size="14" fill="#b45309">source of truth for API writes</text>
+
+    <rect x="940" y="268" width="420" height="250" rx="16" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+    <text x="964" y="306" font-size="22" font-weight="700" fill="#065f46">3 · Database</text>
+    <text x="964" y="340" fill="#064e3b">Compiled to a portable CHECK constraint</text>
+    <text x="964" y="368" font-size="14" fill="#047857" font-family="Cascadia Code, Consolas, monospace">CONSTRAINT ck_alerts_ticket_needs_site</text>
+    <text x="964" y="390" font-size="14" fill="#047857" font-family="Cascadia Code, Consolas, monospace">CHECK (NOT present(ticket) OR present(site))</text>
+    <text x="964" y="420" fill="#064e3b">Direct SQL inserts cannot break it</text>
+    <text x="964" y="494" font-size="14" fill="#047857">protects externally fed tables</text>
+  </g>
+
+  <rect x="40" y="546" width="1320" height="66" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="64" y="574" font-size="16" fill="#334155">Rules SQL cannot express (regex patterns, guarded “when” rules, custom JsonLogic) stay app-enforced.</text>
+  <text x="64" y="598" font-size="16" fill="#334155">Rows that arrive directly and break them are still shown, flagged with ⚠ and the reasons, instead of being hidden.</text>
+</svg>

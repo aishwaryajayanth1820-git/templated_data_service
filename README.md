@@ -8,6 +8,35 @@ without any code change.
 actions in one JSON template. TDS creates the database table, a REST API and a
 React UI for it, with no code change and no restart.
 
+![One template becomes a database table, a REST API and a React UI](docs/images/01-concept.svg)
+
+## How it works
+
+**Architecture.** One Spring Boot JAR serves the API and the React app. Requests
+read an immutable catalog of published templates; publishing swaps in a new one,
+so changes go live without a restart.
+
+![Architecture: React SPA, Spring Boot modules around a live catalog, SQLite or PostgreSQL](docs/images/03-architecture.svg)
+
+**Dynamic schema management.** Drafts are validated, every change in the
+migration plan is classified and pre-checked against existing rows, and each
+publish runs in one transaction and is stored as a new version.
+
+![Draft, validate, plan, publish, live, with migration step classes and the SQLite rebuild](docs/images/05-publish-lifecycle.svg)
+
+**One rule, three enforcement points.** Rules written once in the template run
+in the browser, on the server and, where SQL can express them, as database
+`CHECK` constraints.
+
+![A requires rule enforced in the browser, on the server and in the database](docs/images/04-one-rule-three-places.svg)
+
+**Where it fits.** A simplified, category-level comparison with established
+tools, which are far more mature than this project.
+
+![Comparison with headless CMSs, low-code builders, auto-generated APIs and form libraries](docs/images/02-landscape.svg)
+
+## Documentation
+
 | Doc | What |
 |---|---|
 | [project_requirement.md](project_requirement.md) | Original requirement |
@@ -84,6 +113,7 @@ src/main/java/com/lnw/tds   backend: grammar, ddl, catalog, data, access, script
 src/main/resources          application*.yml, Flyway scripts per vendor
 ui/                         React + Mantine app: data pages, admin, Schema Studio
 schema/                     tds-template.schema.json (grammar meta-schema, shared by server and Studio)
+docs/images/                diagrams (SVG) used in this README
 templates/                  seed templates; sample-data/ rows for the dev profile
 scripts/                    action scripts (loaded at startup, hot-reloaded)
 testdata/parity/            JsonLogic test cases shared by JUnit and Vitest
