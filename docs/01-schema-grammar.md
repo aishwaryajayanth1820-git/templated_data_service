@@ -1,0 +1,401 @@
+# TDS Template Grammar — `tds/v1`
+
+Status: **Draft for review** · Owner: Zypher / Aabel · 2026-10-03
+
+A **template** is a single JSON document that fully describes one managed table:
+its columns, types, constraints, relations, UI placement, role access, cross-field
+rules and actionable scripts. The service turns a published template into
+(1) a physical table (SQLite now, PostgreSQL later), (2) REST CRUD endpoints and
+(3) React view/manage screens — with no code change.
+
+Machine-checkable definition: [`schema/tds-template.schema.json`](../schema/tds-template.schema.json)
+(JSON Schema 2020-12). Worked examples: [`templates/`](../templates/).
+
+---
+
+## 1. Prior art and what we adopt
+
+| Source | What it gets right | What we take |
+|---|---|---|
+| **Directus** (fields API) | Splits every field into a DB part (`schema`) and a UI part (`meta.interface`, `display`, `conditions`), with per-role permissions per collection | The split between storage, UI and access in each field; a matrix of roles and operations per table, narrowed per field |
+| **Frappe DocType** | Typed fields + `depends_on` / `mandatory_depends_on` / `read_only_depends_on`; per-role perms table | Conditional visibility, required and read-only rules on a field. We **reject** its `eval:` JS strings, which aren't safe and don't port between languages |
+| **Strapi** content-type `schema.json` | Compact `attributes` with `enumeration`, `relation` + `target` | Small logical type set; `ref` as a first-class type |
+| **JSON Schema 2020-12** | Standard structural validation; `dependentRequired`, `if/then/else` | Validates the *template document itself* (networknt in Java, ajv in React; also gives editor autocompletion) |
+| **JsonLogic** | Rules stored as JSON data, same evaluator in JS and Java (`json-logic-js`, `json-logic-java`) | The expression language for every `*When` condition and every custom rule |
+| **JSON Forms / RJSF** | Data schema vs UI schema separation | Concept only; we render our own widgets from the template (one source of truth, not two schemas) |
+| **GraalJS (polyglot)** | Sandboxed JS in JVM: no host class lookup, no IO, no threads by default | Runtime for action scripts |
+
+**Verdict:** no single standard covers *relational table + UI + RBAC + actions*.
+We define a small vocabulary of our own (`tds/v1`), shaped like Directus and Frappe,
+and reuse JSON Schema and JsonLogic for validation and rules rather than inventing
+our own.
+
+---
+
+## 2. Document shape
+
+```jsonc
+{
+  "$schema": "../schema/tds-template.schema.json",
+  "grammar": "tds/v1",                 // grammar version, required
+  "name": "alerts",                    // physical table name, immutable after first publish
+  "label": "Alerts",
+  "description": "Operational alerts raised by monitoring.",
+  "manageType": "VIEW",                // VIEW | MANAGE_VIEW | DATA_SOURCE
+  "options": { "audit": true, "optimisticLock": true },
+  "fields":  [ /* §4, ordered — order = column order in DDL and UI */ ],
+  "indexes": [ /* §5 */ ],
+  "rules":   [ /* §7 cross-field constraints */ ],
+  "actions": [ /* §8 scripted buttons */ ],
+  "access":  { /* §6 role → operations */ },
+  "view":    { /* §9 tabular view settings */ }
+}
+```
+
+Key style: grammar keys are `camelCase`; table and field **names** are `snake_case`
+(`^[a-z][a-z0-9_]{0,62}$`). PostgreSQL lower-cases unquoted identifiers and caps
+them at 63 chars, so `minSpinTime` from the requirement becomes `min_spin_time`.
+
+Reserved: table prefix `tds_` (system tables); field names `created_at`,
+`created_by`, `updated_at`, `updated_by`, `row_version`, and anything starting with `$`.
+
+---
+
+## 3. `manageType` semantics
+
+| manageType | Viewer UI (grid) | Manage UI (forms) | REST CRUD | Typical writer |
+|---|---|---|---|---|
+| `VIEW` | ✅ | ❌ | ✅ (role-gated) | External process / direct DB insert / API |
+| `MANAGE_VIEW` | ✅ | ✅ (admin form, inline edit) | ✅ | Admin through the UI |
+| `DATA_SOURCE` | ❌ | ❌ | ✅ | Direct DB / API; consumed as a `ref` target and lookup list |
+
+Consequence: `VIEW` and `DATA_SOURCE` rows can bypass the application. **Every
+constraint that can be expressed in SQL is also emitted as DDL** (NOT NULL, UNIQUE,
+FK, CHECK). For the remaining constraints (regex patterns, `expr` rules), the
+viewer grid flags rows that break them instead of hiding them.
+
+---
+
+## 4. Fields
+
+```jsonc
+{
+  "name": "alert_type",
+  "label": "Type",
+  "description": "Severity bucket",
+  "type": "enum",
+  "values": [ { "value": "CRITICAL", "label": "Critical", "color": "red" }, "MAJOR", "MINOR", "INFO" ],
+  "required": true,
+  "unique": false,
+  "default": "INFO",
+  "constraints": { },
+  "requiredWhen": null,
+  "ui":     { "placement": "column", "widget": "select", "order": 30, "width": 120 },
+  "access": { "viewer": ["read"] },
+  "renamedFrom": null
+}
+```
+
+### 4.1 Logical types → physical types
+
+| `type` | Params | SQLite | PostgreSQL | Default widget |
+|---|---|---|---|---|
+| `id` | — | `INTEGER PRIMARY KEY AUTOINCREMENT` | `BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY` | — (system) |
+| `string` | `length` (default 255, max 10485760) | `TEXT` + `CHECK(length(c) <= n)` | `VARCHAR(n)` | `text` |
+| `text` | — | `TEXT` | `TEXT` | `textarea` |
+| `integer` | — | `INTEGER` | `INTEGER` | `number` |
+| `long` | — | `INTEGER` | `BIGINT` | `number` |
+| `decimal` | `precision` (1-38), `scale` | `NUMERIC` | `NUMERIC(p,s)` | `number` |
+| `double` | — | `REAL` | `DOUBLE PRECISION` | `number` |
+| `boolean` | — | `INTEGER CHECK(c IN (0,1))` | `BOOLEAN` | `switch` |
+| `date` | — | `TEXT` (ISO `yyyy-MM-dd`) | `DATE` | `date` |
+| `datetime` | — | `TEXT` (ISO-8601 UTC `…Z`) | `TIMESTAMPTZ` | `datetime` |
+| `time` | — | `TEXT` (`HH:mm:ss`) | `TIME` | `time` |
+| `enum` | `values` (required) | `TEXT CHECK(c IN (…))` | `VARCHAR(64) CHECK(c IN (…))` | `select` |
+| `ref` | `ref` (required) | `INTEGER REFERENCES t(id)` | `BIGINT REFERENCES t(id)` | `lookup` |
+| `json` | — | `TEXT CHECK(json_valid(c))` | `JSONB` | `json` |
+| `uuid` | — | `TEXT` | `UUID` | `text` |
+
+Design notes
+- Enums are a `CHECK` constraint, **not** a PG native `ENUM`. That keeps SQLite and
+  PostgreSQL the same and lets us add values without `ALTER TYPE`.
+- v1: exactly **one** field of type `id` per template, used as the surrogate primary key.
+  Natural keys are expressed with `unique` or unique `indexes`.
+- `datetime` is always UTC in storage; the UI renders it in the viewer's zone.
+
+### 4.2 Enum values
+`values` accepts plain strings or objects `{ value, label?, color?, description? }`.
+`color` ∈ `grey|red|orange|yellow|green|blue|purple` and drives the grid badge.
+Values match `^[A-Za-z0-9_\-]{1,64}$`.
+
+### 4.3 References (`type: "ref"`)
+```jsonc
+"ref": {
+  "target":   "alert_groups",        // template name; must be published before (or with) this one
+  "display":  "alert_group_name",    // target field shown in grid and lookup instead of the id
+  "onDelete": "RESTRICT"             // RESTRICT (default) | CASCADE | SET_NULL
+}
+```
+The column stores the target's `id`. The REST API returns `{ "alert_group": 4, "alert_group$display": "Network" }`.
+`SET_NULL` requires `required: false`.
+
+> The requirement wrote `alert_group: varchar(255) via FK`. We store the FK **id**,
+> not a copy of the name: renaming a group then never orphans alerts. Tell me if
+> the name is meant to be denormalised on purpose.
+
+### 4.4 Constraints
+
+| Key | Applies to | Meaning | Enforced in |
+|---|---|---|---|
+| `required` | all | NOT NULL; UI mandatory | DB + App |
+| `unique` | all except `json`, `text` | UNIQUE | DB |
+| `default` | all | literal, or `{ "fn": "now" \| "today" \| "uuid" \| "currentUser" }` | DB (literals) / App (fns) |
+| `constraints.notBlank` | string, text | not empty after trim | DB (`CHECK(trim(c) <> '')`) + App |
+| `constraints.minLength` / `maxLength` | string, text | char length bounds (`maxLength ≤ length`) | DB + App |
+| `constraints.pattern` | string | ECMA-262 regex, anchored | App |
+| `constraints.format` | string | `email` \| `url` \| `hostname` \| `ipv4` | App |
+| `constraints.min` / `max` | numeric, date, datetime | inclusive bounds | DB + App |
+| `requiredWhen` | all | JsonLogic; field is required when it evaluates truthy | App |
+
+**"Present"** (used by `required*` and all rules): `value != null` and, for
+strings, `trim(value) != ""`.
+
+---
+
+## 5. Indexes
+
+```jsonc
+"indexes": [
+  { "name": "ux_operator_jurisdiction", "fields": ["operator_name", "jurisdictional_name"], "unique": true },
+  { "name": "ix_alerts_date", "fields": ["alert_date"] }
+]
+```
+FK columns get an index automatically. Names follow `ix_*` / `ux_*`.
+
+---
+
+## 6. Access (roles and permissions)
+
+Roles are managed separately (Roles & Users admin). Templates only **reference** role names.
+
+**Built-in roles:** `admin` (everything, including Schema Studio, roles and users)
+and `viewer` (assigned to every user by default).
+
+### 6.1 Table level
+```jsonc
+"access": {
+  "admin":    ["read", "create", "update", "delete", "run:*"],
+  "operator": ["read", "update", "run:create_ticket"],
+  "viewer":   ["read"]
+}
+```
+Operations: `read`, `create`, `update`, `delete`, `run:<action>` / `run:*`.
+Defaults when `access` is omitted: `admin` gets everything; `viewer` gets `read`
+on `VIEW` and `MANAGE_VIEW` tables and nothing on `DATA_SOURCE`. Reading a ref's
+display value is allowed by `read` on the **referencing** table.
+
+### 6.2 Field level (narrowing only)
+```jsonc
+"access": { "viewer": [], "operator": ["read"] }   // per field
+```
+Field ops: `read`, `create` (may set on insert), `update` (may change). Effective
+permission = table op **AND** field op. A role that isn't listed in a field's
+`access` (or a field with no `access` block) inherits the table level for that
+role. `[]` hides the field from that role. A field cannot grant more than its
+table grants, and `admin` is never narrowed.
+
+Mapping from the requirement's notation: `Roles: Nil` → system-managed and
+read-only (only `id` and audit columns). `Admin->Add, Update, Delete` → `admin`:
+`create`, `update` on the field. Delete applies to whole rows, so it lives at
+table level.
+
+---
+
+## 7. Rules (cross-field constraints)
+
+Every rule compiles to JsonLogic. The browser evaluates rules for instant feedback
+and the server re-evaluates them on every write; the server's result is
+authoritative. Rule kinds `requires`, `exclusive` and `atLeastOne` also compile to
+a portable SQL `CHECK`, so a direct DB insert can't break them either.
+
+```jsonc
+"rules": [
+  // "if x is present, y and z must also be present"
+  { "id": "ticket_needs_site", "kind": "requires", "if": "alert_ticket", "then": ["alert_site"],
+    "message": "A ticket reference needs the site." },
+
+  // at most one of these may be present
+  { "id": "one_contact", "kind": "exclusive", "fields": ["email", "phone"] },
+
+  // at least one of these must be present
+  { "id": "some_contact", "kind": "atLeastOne", "fields": ["email", "phone"] },
+
+  // arbitrary JsonLogic; optional `when` guard on any rule
+  { "id": "spin_range", "kind": "expr",
+    "when":   { "==": [{ "var": "jurisdictional_name" }, "UK"] },
+    "assert": { ">=": [{ "var": "min_spin_time" }, 2.5] },
+    "fields": ["min_spin_time"],
+    "message": "UK requires a minimum spin time of 2.5 s." }
+]
+```
+
+**JsonLogic context:** each record field by name, plus `$op`
+(`"create"`/`"update"`), `$user.username`, `$user.roles`. Custom operator
+`present` follows §4.4.
+Example: `{ "present": [{ "var": "alert_ticket" }] }`.
+
+| kind | SQL CHECK emitted |
+|---|---|
+| `requires` | `CHECK (NOT(<present if>) OR (<present then₁> AND …))` |
+| `exclusive` | `CHECK ((<present a>) + (<present b>) + … <= 1)` |
+| `atLeastOne` | `CHECK (<present a> OR <present b> OR …)` |
+| `expr` | none (app only) |
+
+---
+
+## 8. Actions (injectable JavaScript)
+
+```jsonc
+"actions": [{
+  "name": "create_ticket",
+  "label": "Create Jira ticket",
+  "icon": "ticket",
+  "placement": "row",                         // row | toolbar | selection
+  "script": "alerts/create_ticket.js",        // relative to the scripts root
+  "function": "createTicket",
+  "confirm": null,                            // optional confirmation prompt
+  "visibleWhen": { "!": { "present": [{ "var": "alert_ticket" }] } },
+  "timeoutMs": 3000
+}]
+```
+
+**Storage and loading:** scripts are files under `scripts/` (configurable). On
+startup the `ScriptRegistry` loads and pre-compiles every `*.js`, then checks that
+each `script#function` referenced by a published template exists. A file watcher
+hot-reloads scripts when they change. Schema Studio edits scripts by writing the
+file. Publishing a template fails if a script or function it references is
+missing.
+
+**Contract:**
+```js
+/** @param {ActionContext} ctx @returns {ActionResult} */
+function createTicket(ctx) { … }
+```
+
+| `ctx` member | Description |
+|---|---|
+| `ctx.record` | frozen copy of the row (`row` placement) |
+| `ctx.records` | array (`selection` placement) |
+| `ctx.display` | `{ field: displayValue }` for `ref` and `enum` fields |
+| `ctx.user` | `{ username, roles }` |
+| `ctx.template` | `{ name, label }` |
+| `ctx.now()` | ISO-8601 UTC string |
+| `ctx.files.writeText(name, text)` | writes into `data/action-output/<template>/` only; returns the stored file name |
+| `ctx.log.info/warn(msg)` | goes to the service log, tagged with the action |
+
+| `ActionResult.kind` | UI behaviour |
+|---|---|
+| `text` | modal with `title` + `content` and a **Copy** button (+ download if `file`) |
+| `download` | browser downloads `file` |
+| `message` | toast with `content` |
+| `refresh` | reload the grid |
+
+**Sandbox:** GraalJS `Context` with `allowHostAccess=NONE`,
+`allowHostClassLookup=false`, no IO, no threads, no native access. The `ctx` host
+object is the only bridge. A watchdog cancels the script at `timeoutMs`
+(`Context.close(true)`).
+
+---
+
+## 9. View (tabular UI)
+
+Per-field `ui`:
+
+| key | values | meaning |
+|---|---|---|
+| `placement` | `column` \| `detail` \| `hidden` | `column` = grid column (the requirement's *row_label*); `detail` = shown in the expanded row / side drawer (*Label*); `hidden` = not displayed (*NIL*) |
+| `widget` | `text`, `textarea`, `number`, `switch`, `checkbox`, `date`, `datetime`, `time`, `select`, `radio`, `lookup`, `json` | input in the manage form (defaults per §4.1) |
+| `order` | int | position in grid and form (default: array order × 10) |
+| `width` | px | grid column width |
+| `group` | string | form section heading |
+| `help`, `placeholder` | string | form hints |
+| `format` | string | display pattern, e.g. `yyyy-MM-dd HH:mm`, `0.00 's'` |
+| `visibleWhen`, `readonlyWhen` | JsonLogic | conditional UI |
+
+Table-level `view`:
+```jsonc
+"view": {
+  "titleField": "alert_name",                          // headline in drawer / lookup
+  "defaultSort": [{ "field": "alert_date", "dir": "desc" }],
+  "pageSize": 25,                                      // 10 | 25 | 50 | 100
+  "search": ["alert_name", "alert_source", "alert_site"],   // free-text box
+  "filters": ["alert_type", "alert_group", "alert_date"]    // facet chips
+}
+```
+
+---
+
+## 10. Lifecycle and versioning
+
+```
+Draft ──validate──▶ Valid ──plan──▶ Migration plan (diff vs applied) ──publish──▶ Published vN
+```
+
+- The DB is the source of truth (`tds_template`, `tds_template_version` hold the
+  JSON, a checksum, who and when, and the generated DDL). Files in `templates/`
+  are for seeding, import and export: on startup, a file whose template is not in
+  the database yet is imported as a draft. It's auto-published only in the `dev`
+  profile ([ADR-0016](adr/0016-template-seeding-and-dev-sample-data.md)).
+- `name` and field `type` are immutable after first publish (v1). Rename a field
+  with `renamedFrom`.
+
+| Change | Class | Behaviour |
+|---|---|---|
+| UI, access, rules, actions, labels | metadata | no DDL |
+| add nullable field / field with default / index / enum value | safe | auto-applied |
+| add required field without default; tighten length, min/max, or add unique | checked | pre-check existing rows; blocked with a count if they violate it |
+| remove enum value, drop field, drop template | destructive | admin must type the name to confirm; Studio shows rows affected |
+
+SQLite can't `ALTER` constraints, so those migrations use the standard
+"create new → copy → drop → rename" table rebuild inside one transaction.
+
+---
+
+## 11. Validation (what *Validate* checks)
+
+1. **Structure:** the JSON Schema meta-schema.
+2. **Semantics (codes shown in Studio):**
+   - `E001` duplicate field name · `E002` not exactly one `id` field · `E003` reserved name
+   - `E010` ref target missing or unpublished · `E011` ref display field missing on target · `E012` `SET_NULL` on required field
+   - `E020` enum default not in values · `E021` duplicate enum value · `E022` `maxLength > length` · `E023` `min > max`
+   - `E030` rule/index/view references unknown field · `E031` JsonLogic `var` references unknown field · `E032` unsupported JsonLogic operator ([ADR-0003](adr/0003-jsonlogic-in-house-evaluators.md))
+   - `E040` action script file or function not found · `E041` `run:` grants unknown action
+   - `W001` role in `access` doesn't exist · `W002` `ui` set on a `DATA_SOURCE` (ignored) · `W003` `MANAGE_VIEW` with no editable field · `W004` field grants more than its table
+
+---
+
+## 12. Mapping the requirement's examples
+
+| Requirement notation | `tds/v1` |
+|---|---|
+| `bigint, PK -> UI:NIL, Roles:Nil` | `{ "name": "id", "type": "id" }` |
+| `varchar(255)` | `"type": "string", "length": 255` |
+| `datetime` | `"type": "datetime"` |
+| `enum` | `"type": "enum", "values": [...]` |
+| `varchar(255) via FK Table alert_groups` | `"type": "ref", "ref": { "target": "alert_groups", "display": "alert_group_name" }` |
+| `UI: row_label` / `Label` / `NIL` / `text` | `ui.placement: column` / `detail` / `hidden`; `ui.widget: text` |
+| `Roles:[Admin->Add, Update, Delete]` | table `access.admin: [read, create, update, delete]` |
+| `button[Action-> JavaScript_Function(...)]` | `actions[]` + file in `scripts/` |
+
+Full translations: [`templates/alert_groups.json`](../templates/alert_groups.json),
+[`templates/alerts.json`](../templates/alerts.json),
+[`templates/operator_settings.json`](../templates/operator_settings.json).
+
+### Open questions
+1. `operator_name` is typed `datetime` in the requirement. We assumed a typo and
+   made it `string(255)`.
+2. The `alert_type` values aren't given. We assumed `CRITICAL | MAJOR | MINOR | INFO`.
+3. Who may run `create_ticket`? We assumed `admin` and `viewer`, since it only
+   writes a text file.
+4. The `MANAGE_VIEW` example has no table name. We named it `operator_settings`,
+   with a unique key on `(operator_name, jurisdictional_name)`.

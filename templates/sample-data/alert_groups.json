@@ -1,0 +1,7 @@
+[
+  {"id":1,"alert_group_name":"Network"},
+  {"id":2,"alert_group_name":"Database"},
+  {"id":3,"alert_group_name":"Payments"},
+  {"id":4,"alert_group_name":"Game Servers"},
+  {"id":5,"alert_group_name":"Platform"}
+]

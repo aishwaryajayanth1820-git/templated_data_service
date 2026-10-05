@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tds.local/schema/tds-template/v1.json",
+  "title": "TDS Template (tds/v1)",
+  "description": "Describes one managed table: fields, constraints, relations, UI, access, rules and actions. See docs/01-schema-grammar.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grammar", "name", "manageType", "fields"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "grammar": { "const": "tds/v1" },
+    "name": { "$ref": "#/$defs/tableName" },
+    "label": { "type": "string", "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "manageType": { "enum": ["VIEW", "MANAGE_VIEW", "DATA_SOURCE"] },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "audit": { "type": "boolean", "default": true },
+        "optimisticLock": { "type": "boolean", "default": true }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/field" }
+    },
+    "indexes": { "type": "array", "items": { "$ref": "#/$defs/index" } },
+    "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+    "access": { "$ref": "#/$defs/tableAccess" },
+    "view": { "$ref": "#/$defs/view" }
+  },
+
+  "$defs": {
+    "tableName": {
+      "type": "string",
+      "pattern": "^(?!tds_)[a-z][a-z0-9_]{0,62}$"
+    },
+    "fieldName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,62}$",
+      "not": { "enum": ["created_at", "created_by", "updated_at", "updated_by", "row_version"] }
+    },
+    "fieldRef": {
+      "description": "Reference to a declared field or an audit column.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,62}$"
+    },
+    "roleName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,40}$" },
+    "jsonLogic": {
+      "description": "A JsonLogic expression (https://jsonlogic.com). Context: record fields, $op, $user.",
+      "type": ["object", "boolean"]
+    },
+    "enumValue": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[A-Za-z0-9_\\-]{1,64}$" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {
+            "value": { "type": "string", "pattern": "^[A-Za-z0-9_\\-]{1,64}$" },
+            "label": { "type": "string" },
+            "color": { "enum": ["grey", "red", "orange", "yellow", "green", "blue", "purple"] },
+            "description": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "defaultValue": {
+      "oneOf": [
+        { "type": ["string", "number", "boolean", "null"] },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fn"],
+          "properties": { "fn": { "enum": ["now", "today", "uuid", "currentUser"] } }
+        }
+      ]
+    },
+
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fieldName" },
+        "label": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string" },
+        "type": {
+          "enum": ["id", "string", "text", "integer", "long", "decimal", "double", "boolean",
+                   "date", "datetime", "time", "enum", "ref", "json", "uuid"]
+        },
+        "length": { "type": "integer", "minimum": 1, "maximum": 10485760 },
+        "precision": { "type": "integer", "minimum": 1, "maximum": 38 },
+        "scale": { "type": "integer", "minimum": 0, "maximum": 38 },
+        "values": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/enumValue" } },
+        "ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target", "display"],
+          "properties": {
+            "target": { "$ref": "#/$defs/tableName" },
+            "display": { "$ref": "#/$defs/fieldRef" },
+            "onDelete": { "enum": ["RESTRICT", "CASCADE", "SET_NULL"], "default": "RESTRICT" }
+          }
+        },
+        "required": { "type": "boolean", "default": false },
+        "unique": { "type": "boolean", "default": false },
+        "default": { "$ref": "#/$defs/defaultValue" },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "notBlank": { "type": "boolean" },
+            "minLength": { "type": "integer", "minimum": 0 },
+            "maxLength": { "type": "integer", "minimum": 1 },
+            "pattern": { "type": "string" },
+            "format": { "enum": ["email", "url", "hostname", "ipv4"] },
+            "min": { "type": ["number", "string"] },
+            "max": { "type": ["number", "string"] }
+          }
+        },
+        "requiredWhen": { "$ref": "#/$defs/jsonLogic" },
+        "ui": { "$ref": "#/$defs/fieldUi" },
+        "access": { "$ref": "#/$defs/fieldAccess" },
+        "renamedFrom": { "$ref": "#/$defs/fieldName" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "enum" } } }, "then": { "required": ["values"] } },
+        { "if": { "properties": { "type": { "const": "ref" } } }, "then": { "required": ["ref"] } },
+        {
+          "if": { "properties": { "type": { "const": "id" } } },
+          "then": {
+            "not": { "anyOf": [{ "required": ["default"] }, { "required": ["requiredWhen"] }, { "required": ["access"] }] }
+          }
+        },
+        { "if": { "not": { "properties": { "type": { "const": "string" } } } }, "then": { "not": { "required": ["length"] } } },
+        { "if": { "not": { "properties": { "type": { "const": "decimal" } } } }, "then": { "not": { "anyOf": [{ "required": ["precision"] }, { "required": ["scale"] }] } } },
+        { "if": { "not": { "properties": { "type": { "const": "enum" } } } }, "then": { "not": { "required": ["values"] } } },
+        { "if": { "not": { "properties": { "type": { "const": "ref" } } } }, "then": { "not": { "required": ["ref"] } } }
+      ]
+    },
+
+    "fieldUi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "placement": { "enum": ["column", "detail", "hidden"] },
+        "widget": {
+          "enum": ["text", "textarea", "number", "switch", "checkbox", "date", "datetime", "time",
+                   "select", "radio", "lookup", "json"]
+        },
+        "order": { "type": "integer" },
+        "width": { "type": "integer", "minimum": 40, "maximum": 1200 },
+        "group": { "type": "string" },
+        "help": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "format": { "type": "string" },
+        "visibleWhen": { "$ref": "#/$defs/jsonLogic" },
+        "readonlyWhen": { "$ref": "#/$defs/jsonLogic" }
+      }
+    },
+
+    "tableAccess": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/roleName" },
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "pattern": "^(read|create|update|delete|run:(\\*|[a-z][a-z0-9_]{0,62}))$"
+        }
+      }
+    },
+    "fieldAccess": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/roleName" },
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": { "enum": ["read", "create", "update"] }
+      }
+    },
+
+    "index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "fields"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^(ix|ux)_[a-z0-9_]{1,59}$" },
+        "fields": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } },
+        "unique": { "type": "boolean", "default": false }
+      }
+    },
+
+    "rule": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,62}$" },
+        "kind": { "enum": ["requires", "exclusive", "atLeastOne", "expr"] },
+        "when": { "$ref": "#/$defs/jsonLogic" },
+        "message": { "type": "string" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "id": true, "kind": { "const": "requires" }, "when": true, "message": true,
+            "if": { "$ref": "#/$defs/fieldRef" },
+            "then": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } }
+          },
+          "required": ["if", "then"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "id": true, "kind": { "enum": ["exclusive", "atLeastOne"] }, "when": true, "message": true,
+            "fields": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } }
+          },
+          "required": ["fields"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "id": true, "kind": { "const": "expr" }, "when": true, "message": true,
+            "assert": { "$ref": "#/$defs/jsonLogic" },
+            "fields": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } }
+          },
+          "required": ["assert", "message"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "label", "placement", "script", "function"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,62}$" },
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "placement": { "enum": ["row", "toolbar", "selection"] },
+        "script": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_\\-/]+\\.js$" },
+        "function": { "type": "string", "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$" },
+        "confirm": { "type": ["string", "null"] },
+        "visibleWhen": { "$ref": "#/$defs/jsonLogic" },
+        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 30000, "default": 3000 }
+      }
+    },
+
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "titleField": { "$ref": "#/$defs/fieldRef" },
+        "defaultSort": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field"],
+            "properties": {
+              "field": { "$ref": "#/$defs/fieldRef" },
+              "dir": { "enum": ["asc", "desc"], "default": "asc" }
+            }
+          }
+        },
+        "pageSize": { "enum": [10, 25, 50, 100] },
+        "search": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } },
+        "filters": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/fieldRef" } }
+      }
+    }
+  }
+}

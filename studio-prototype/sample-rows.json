@@ -1,0 +1,31 @@
+{
+  "alert_groups": [
+    { "id": 1, "alert_group_name": "Network" },
+    { "id": 2, "alert_group_name": "Database" },
+    { "id": 3, "alert_group_name": "Payments" },
+    { "id": 4, "alert_group_name": "Game Servers" },
+    { "id": 5, "alert_group_name": "Platform" }
+  ],
+  "alerts": [
+    { "id": 1, "alert_date": "2026-10-03T09:42:00Z", "alert_name": "Packet loss above 5% on edge-02", "alert_type": "MAJOR", "alert_group": 1, "alert_source": "Zabbix", "alert_site": "LON-DC1", "alert_description": "Packet loss sustained for 10 minutes on uplink 2.", "alert_ticket": null },
+    { "id": 2, "alert_date": "2026-10-03T08:15:00Z", "alert_name": "Replication lag on db-main", "alert_type": "CRITICAL", "alert_group": 2, "alert_source": "Prometheus", "alert_site": "LON-DC1", "alert_description": "Replica lag 340 s; automatic failover not triggered.", "alert_ticket": "OPS-4412" },
+    { "id": 3, "alert_date": "2026-10-03T07:58:00Z", "alert_name": "Payment gateway timeout spike", "alert_type": "CRITICAL", "alert_group": 3, "alert_source": "Datadog", "alert_site": "AWS eu-west-1", "alert_description": null, "alert_ticket": null },
+    { "id": 4, "alert_date": "2026-10-02T23:10:00Z", "alert_name": "Game server pool at 85% capacity", "alert_type": "MINOR", "alert_group": 4, "alert_source": "Grafana", "alert_site": "LV-DC2", "alert_description": "Scale-out recommended before evening peak.", "alert_ticket": null },
+    { "id": 5, "alert_date": "2026-10-02T21:44:00Z", "alert_name": "TLS certificate expires in 14 days", "alert_type": "INFO", "alert_group": 5, "alert_source": "CertWatch", "alert_site": null, "alert_description": "api certificate renewal due.", "alert_ticket": null },
+    { "id": 6, "alert_date": "2026-10-02T18:03:00Z", "alert_name": "Disk usage 91% on log-store-1", "alert_type": "MAJOR", "alert_group": 5, "alert_source": "Zabbix", "alert_site": "LV-DC2", "alert_description": "Log rotation backlog after config change.", "alert_ticket": "OPS-4398" },
+    { "id": 7, "alert_date": "2026-10-02T14:27:00Z", "alert_name": "Jackpot feed delayed", "alert_type": "MAJOR", "alert_group": 4, "alert_source": "Feed Monitor", "alert_site": "LON-DC1", "alert_description": "Feed latency 45 s against a 5 s SLA.", "alert_ticket": null },
+    { "id": 8, "alert_date": "2026-10-02T11:05:00Z", "alert_name": "BGP session flap", "alert_type": "MINOR", "alert_group": 1, "alert_source": "NetFlow", "alert_site": "AMS-POP", "alert_description": null, "alert_ticket": null },
+    { "id": 9, "alert_date": "2026-10-01T22:50:00Z", "alert_name": "Settlement batch failed", "alert_type": "CRITICAL", "alert_group": 3, "alert_source": "Batch Scheduler", "alert_site": "AWS eu-west-1", "alert_description": "Nightly settlement job exited with code 2.", "alert_ticket": "OPS-4371" },
+    { "id": 10, "alert_date": "2026-10-01T16:30:00Z", "alert_name": "Deadlock detected on wallet DB", "alert_type": "MAJOR", "alert_group": 2, "alert_source": "Prometheus", "alert_site": "LON-DC1", "alert_description": "3 deadlocks within 5 minutes.", "alert_ticket": null },
+    { "id": 11, "alert_date": "2026-10-01T09:12:00Z", "alert_name": "New firmware available for cabinet switches", "alert_type": "INFO", "alert_group": 1, "alert_source": "Vendor Feed", "alert_site": null, "alert_description": null, "alert_ticket": null },
+    { "id": 12, "alert_date": "2026-09-30T20:41:00Z", "alert_name": "RNG health check warning", "alert_type": "MINOR", "alert_group": 4, "alert_source": "RNG Monitor", "alert_site": "LV-DC2", "alert_description": "Chi-square marginal on batch 7781.", "alert_ticket": null }
+  ],
+  "operator_settings": [
+    { "id": 1, "operator_name": "Acme Gaming", "jurisdictional_name": "UK", "min_spin_time": 2.5 },
+    { "id": 2, "operator_name": "Acme Gaming", "jurisdictional_name": "Malta", "min_spin_time": 0 },
+    { "id": 3, "operator_name": "Northstar Play", "jurisdictional_name": "UK", "min_spin_time": 2.5 },
+    { "id": 4, "operator_name": "Northstar Play", "jurisdictional_name": "New Jersey", "min_spin_time": 1 },
+    { "id": 5, "operator_name": "Bluefin Casino", "jurisdictional_name": "Ontario", "min_spin_time": 0 },
+    { "id": 6, "operator_name": "Bluefin Casino", "jurisdictional_name": "Sweden", "min_spin_time": 3 }
+  ]
+}
