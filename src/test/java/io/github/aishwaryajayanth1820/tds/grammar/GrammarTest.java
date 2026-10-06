@@ -69,7 +69,7 @@ class GrammarTest {
     void seedTemplatesParseAndValidateClean() throws Exception {
         Template groups = seed("alert_groups");
         Template alerts = seed("alerts");
-        Template settings = seed("operator_settings");
+        Template settings = seed("vendor_items");
         assertThat(semantic.validate(groups, context())).isEmpty();
         assertThat(semantic.validate(alerts, context(groups))).isEmpty();
         assertThat(semantic.validate(settings, context())).isEmpty();
@@ -142,9 +142,9 @@ class GrammarTest {
         assertThat(r.fieldErrors()).containsEntry("alert_type", "Not an allowed value")
                 .containsEntry("alert_name", "At most 255 characters");
 
-        Template settings = seed("operator_settings");
-        var s = v.validate(settings, Map.of("operator_name", "  ", "jurisdictional_name", "UK", "min_spin_time", 61.0),
+        Template settings = seed("vendor_items");
+        var s = v.validate(settings, Map.of("vendor_name", "  ", "item_name", "LED Panel", "wattage", -5.0),
                 WriteOp.CREATE, "admin", Set.of("admin"));
-        assertThat(s.fieldErrors()).containsEntry("operator_name", "Required").containsEntry("min_spin_time", "Must be ≤ 60");
+        assertThat(s.fieldErrors()).containsEntry("vendor_name", "Required").containsEntry("wattage", "Must be ≥ 0");
     }
 }

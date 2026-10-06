@@ -1,6 +1,6 @@
 # 0012. Interpretation of the requirement's example schemas
 
-- **Status:** Accepted
+- **Status:** Accepted (items 1, 5 and 6 superseded by [0019](0019-vendor-items-example.md))
 - **Date:** 2026-10-03
 - **Deciders:** Aabel, Zypher
 - **Affects:** `templates/*.json`, `scripts/alerts/create_ticket.js`

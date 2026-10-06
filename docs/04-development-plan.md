@@ -133,3 +133,4 @@ see an empty shell, log out.
 | 2026-10-04 | Grid built on Mantine `Table` instead of TanStack Table | [0015](adr/0015-grid-on-mantine-table.md) |
 | 2026-10-05 | M2–M6 done: 49 backend unit + 24 integration + 45 UI tests; all requirement flows verified in a browser on the packaged jar. Seeding policy and admin data browser recorded | [0016](adr/0016-template-seeding-and-dev-sample-data.md), [0017](adr/0017-data-source-admin-browser.md) |
 | 2026-10-06 | Package and group ID renamed to the neutral `io.github.aishwaryajayanth1820.tds` | [0018](adr/0018-neutral-package-name.md) |
+| 2026-10-06 | MANAGE_VIEW example changed to `vendor_items` (requirement change); `.claude/` and `project_requirement.md` kept local, no longer in the repository | [0019](adr/0019-vendor-items-example.md) |

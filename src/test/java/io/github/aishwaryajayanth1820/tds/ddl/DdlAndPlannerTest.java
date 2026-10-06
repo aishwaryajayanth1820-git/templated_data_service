@@ -57,8 +57,8 @@ class DdlAndPlannerTest {
                 .contains("\"alert_date\" TIMESTAMPTZ NOT NULL DEFAULT now()")
                 .contains("\"alert_name\" VARCHAR(255) NOT NULL CHECK (trim(\"alert_name\") <> '')")
                 .contains("\"alert_group\" BIGINT NOT NULL REFERENCES");
-        assertThat(String.join(";", pg.createTable(parse(json("operator_settings")))))
-                .contains("CREATE UNIQUE INDEX \"ux_operator_jurisdiction\" ON \"operator_settings\" (\"operator_name\", \"jurisdictional_name\")");
+        assertThat(String.join(";", pg.createTable(parse(json("vendor_items")))))
+                .contains("CREATE UNIQUE INDEX \"ux_vendor_item\" ON \"vendor_items\" (\"vendor_name\", \"item_name\")");
     }
 
     @Test
@@ -88,25 +88,25 @@ class DdlAndPlannerTest {
 
     @Test
     void typeChangesAreBlockedAndRequiredWithoutDefaultIsPreChecked() throws Exception {
-        Template before = parse(json("operator_settings"));
-        ObjectNode after = json("operator_settings");
+        Template before = parse(json("vendor_items"));
+        ObjectNode after = json("vendor_items");
         ((ObjectNode) after.withArray("fields").get(3)).put("type", "string");
         after.withArray("fields").add(MAPPER.readTree("{\"name\":\"region\",\"type\":\"string\",\"required\":true}"));
 
         MigrationPlan plan = new MigrationPlanner(sqlite).plan(before, parse(after));
 
         assertThat(plan.hasBlocked()).isTrue();
-        assertThat(plan.preChecks()).extracting(MigrationPlan.PreCheck::countSql).contains("SELECT COUNT(*) FROM \"operator_settings\"");
+        assertThat(plan.preChecks()).extracting(MigrationPlan.PreCheck::countSql).contains("SELECT COUNT(*) FROM \"vendor_items\"");
     }
 
     @Test
     void metadataOnlyChangesNeedNoSqlAndPostgresStructuralChangesWaitForM7() throws Exception {
-        Template before = parse(json("operator_settings"));
-        ObjectNode labelOnly = json("operator_settings");
-        labelOnly.put("label", "Operator settings (renamed)");
+        Template before = parse(json("vendor_items"));
+        ObjectNode labelOnly = json("vendor_items");
+        labelOnly.put("label", "Vendor items (renamed)");
         assertThat(new MigrationPlanner(sqlite).plan(before, parse(labelOnly)).statements()).isEmpty();
 
-        ObjectNode structural = json("operator_settings");
+        ObjectNode structural = json("vendor_items");
         structural.withArray("fields").add(MAPPER.readTree("{\"name\":\"note\",\"type\":\"text\"}"));
         MigrationPlan pgPlan = new MigrationPlanner(pg).plan(before, parse(structural));
         assertThat(pgPlan.hasBlocked()).isTrue();

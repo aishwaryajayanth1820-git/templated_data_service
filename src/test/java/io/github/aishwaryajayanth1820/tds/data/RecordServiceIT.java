@@ -55,8 +55,8 @@ class RecordServiceIT extends IntegrationTestBase {
 
     @Test
     void viewerCanReadButNotWriteManagedTables() {
-        assertThat(records.list("operator_settings", q(), VIEWER).total()).isGreaterThan(0);
-        assertThatThrownBy(() -> records.create("operator_settings", mapper.createObjectNode().put("operator_name", "x"), VIEWER))
+        assertThat(records.list("vendor_items", q(), VIEWER).total()).isGreaterThan(0);
+        assertThatThrownBy(() -> records.create("vendor_items", mapper.createObjectNode().put("vendor_name", "x"), VIEWER))
                 .isInstanceOf(ApiException.class).extracting(e -> ((ApiException) e).code()).isEqualTo(ErrorCode.FORBIDDEN);
         assertThatThrownBy(() -> records.list("alert_groups", q(), VIEWER))
                 .as("viewer has no access to DATA_SOURCE by default").isInstanceOf(ApiException.class);
@@ -64,26 +64,26 @@ class RecordServiceIT extends IntegrationTestBase {
 
     @Test
     void createValidatesUpdatesWithOptimisticLockAndTranslatesDbErrors() {
-        assertThatThrownBy(() -> records.create("operator_settings", mapper.createObjectNode().put("min_spin_time", "abc"), ADMIN))
+        assertThatThrownBy(() -> records.create("vendor_items", mapper.createObjectNode().put("wattage", "abc"), ADMIN))
                 .isInstanceOfSatisfying(ValidationException.class, e -> assertThat(e.properties().get("errors").toString())
-                        .contains("min_spin_time=Must be a number"));
-        assertThatThrownBy(() -> records.create("operator_settings", body("Acme Gaming", "UK", 1), ADMIN))
+                        .contains("wattage=Must be a number"));
+        assertThatThrownBy(() -> records.create("vendor_items", body("Voltix", "LED Panel 600x600", 40), ADMIN))
                 .isInstanceOf(ApiException.class).extracting(e -> ((ApiException) e).code()).isEqualTo(ErrorCode.CONFLICT_UNIQUE);
 
-        ObjectNode created = records.create("operator_settings", body("Delta Bet", "Malta", 1.5), ADMIN);
+        ObjectNode created = records.create("vendor_items", body("Lumacore", "LED Strip 5m", 24), ADMIN);
         long id = created.path("id").asLong();
         assertThat(created.path("row_version").asLong()).isZero();
         assertThat(created.path("created_by").asString()).isEqualTo("admin");
 
-        ObjectNode patch = mapper.createObjectNode().put("row_version", 0).put("min_spin_time", 2);
-        assertThat(records.update("operator_settings", id, patch, true, ADMIN).path("row_version").asLong()).isEqualTo(1);
-        assertThatThrownBy(() -> records.update("operator_settings", id, patch, true, ADMIN))
+        ObjectNode patch = mapper.createObjectNode().put("row_version", 0).put("wattage", 26);
+        assertThat(records.update("vendor_items", id, patch, true, ADMIN).path("row_version").asLong()).isEqualTo(1);
+        assertThatThrownBy(() -> records.update("vendor_items", id, patch, true, ADMIN))
                 .isInstanceOf(ApiException.class).extracting(e -> ((ApiException) e).code()).isEqualTo(ErrorCode.CONFLICT_VERSION);
 
         assertThatThrownBy(() -> records.delete("alert_groups", 1, ADMIN))
                 .isInstanceOf(ApiException.class).extracting(e -> ((ApiException) e).code()).isEqualTo(ErrorCode.CONFLICT_REFERENCE);
-        records.delete("operator_settings", id, ADMIN);
-        assertThatThrownBy(() -> records.get("operator_settings", id, ADMIN)).isInstanceOf(ApiException.class);
+        records.delete("vendor_items", id, ADMIN);
+        assertThatThrownBy(() -> records.get("vendor_items", id, ADMIN)).isInstanceOf(ApiException.class);
     }
 
     @Test
@@ -114,8 +114,8 @@ class RecordServiceIT extends IntegrationTestBase {
         assertThat(records.options("alerts", "alert_group", "", VIEWER)).hasSize(5);
     }
 
-    private ObjectNode body(String operator, String jurisdiction, double spin) {
-        return mapper.createObjectNode().put("operator_name", operator).put("jurisdictional_name", jurisdiction).put("min_spin_time", spin);
+    private ObjectNode body(String vendor, String item, double wattage) {
+        return mapper.createObjectNode().put("vendor_name", vendor).put("item_name", item).put("wattage", wattage);
     }
 
 }

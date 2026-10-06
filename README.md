@@ -39,7 +39,6 @@ tools, which are far more mature than this project.
 
 | Doc | What |
 |---|---|
-| [project_requirement.md](project_requirement.md) | Original requirement |
 | [docs/01-schema-grammar.md](docs/01-schema-grammar.md) | Template grammar `tds/v1` |
 | [docs/02-architecture.md](docs/02-architecture.md) | Architecture |
 | [docs/03-application-design.md](docs/03-application-design.md) | Class-level design (+ §15 implementation notes) |
@@ -88,7 +87,7 @@ What to try:
 | Where | What |
 |---|---|
 | **Alerts** (VIEW) | Read-only grid: sort by header, filter by type, group or date, search, expand a row for details. The ⚠ row is a CRITICAL alert with no description (inserted directly, so it breaks an app-level rule). **Create ticket** runs `scripts/alerts/create_ticket.js` and shows copy-ready text plus a download. |
-| **Operator Settings** (MANAGE_VIEW) | **+ New / Edit / Delete** with validation: required fields, range ≤ 60, and a unique operator + jurisdiction pair. |
+| **Vendor Items** (MANAGE_VIEW) | **+ New / Edit / Delete** with validation: required fields, wattage ≥ 0, and a unique vendor + item pair. |
 | **Administration → Alert Groups** | Admin data browser for the DATA_SOURCE lookup. Deleting a group that alerts still use is refused. |
 | **Roles / Users** | Create a role, create a user with that role (temporary password, changed at first sign-in), reset passwords, disable users. |
 | **Schema Studio** | Edit a template (fields, rules, actions with a live script editor, access matrix, view, JSON), **Save draft**, **Publish…** to review the migration plan, pre-checks and DDL, then apply. Create a **+ New template**: after publishing, it's in the navigation immediately. |

@@ -41,3 +41,4 @@ rejected proposal is kept with status `Rejected`.
 | [0016](0016-template-seeding-and-dev-sample-data.md) | Seeding imports new templates only; dev profile publishes and loads sample rows | Accepted | 2026-10-05 |
 | [0017](0017-data-source-admin-browser.md) | DATA_SOURCE tables get an admin-only data browser | Accepted | 2026-10-05 |
 | [0018](0018-neutral-package-name.md) | Use a neutral package and group ID | Accepted | 2026-10-06 |
+| [0019](0019-vendor-items-example.md) | The MANAGE_VIEW example is vendor items (supersedes part of 0012) | Accepted | 2026-10-06 |
