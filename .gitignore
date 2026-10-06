@@ -1,5 +1,5 @@
 target/
-data/
+/data/                 # runtime SQLite database and action output (root only, not source folders named data)
 *.db
 *.db-wal
 *.db-shm

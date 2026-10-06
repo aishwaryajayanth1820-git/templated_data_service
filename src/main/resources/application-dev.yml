@@ -5,4 +5,4 @@ tds:
 
 logging:
   level:
-    com.lnw.tds: DEBUG
+    io.github.aishwaryajayanth1820.tds: DEBUG

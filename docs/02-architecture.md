@@ -93,7 +93,7 @@ In development, Vite (`:5173`) proxies `/api` to Spring Boot (`:8080`).
 ```
 templated_data_service/
 ├─ pom.xml                         Spring Boot app; -Pui also builds ui/ into static/
-├─ src/main/java/com/lnw/tds/…     backend (§5)
+├─ src/main/java/io/github/aishwaryajayanth1820/tds/…     backend (§5)
 ├─ src/main/resources/
 │  ├─ application.yml              common config
 │  ├─ application-dev.yml          SQLite, seed auto-publish, verbose SQL
@@ -137,7 +137,7 @@ spring:
 
 ## 5. Backend module design
 
-Package root `com.lnw.tds`. Each package exposes a small service API and keeps
+Package root `io.github.aishwaryajayanth1820.tds`. Each package exposes a small service API and keeps
 its internals package-private.
 
 ```mermaid
@@ -638,7 +638,7 @@ M1–M4 are backend-heavy and can be demonstrated with the REST API and
 
 ## 15. Decisions to confirm
 
-1. **Package / group id:** `com.lnw.tds`, artifact `templated-data-service`.
+1. **Package / group id:** `io.github.aishwaryajayanth1820.tds`, artifact `templated-data-service` ([ADR-0018](adr/0018-neutral-package-name.md))
 2. **One deployable:** the React build is bundled into the Spring Boot jar, rather
    than deployed separately.
 3. **UI kit: Mantine + TanStack Table.** The alternative is AG Grid Community,

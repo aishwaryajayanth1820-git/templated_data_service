@@ -1,5 +1,5 @@
 /**
- * JsonLogic subset (ADR-0003). Mirrors com.lnw.tds.grammar.JsonLogic; both are checked against
+ * JsonLogic subset (ADR-0003). Mirrors io.github.aishwaryajayanth1820.tds.grammar.JsonLogic; both are checked against
  * testdata/parity/jsonlogic.json. JavaScript operators are the reference semantics.
  */
 

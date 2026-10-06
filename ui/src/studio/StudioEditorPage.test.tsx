@@ -26,6 +26,9 @@ function api() {
 
 const routes = [{ path: '/admin/studio/:name', element: <StudioEditorPage /> }]
 
+// These render the whole Studio and type character by character; on a cold start that exceeds the 5 s default.
+const SLOW = 20_000
+
 describe('StudioEditorPage', () => {
   it('edits fields through inputs without crashing and marks the draft unsaved', async () => {
     api()
@@ -40,7 +43,7 @@ describe('StudioEditorPage', () => {
 
     expect(label).toHaveValue('Game')
     expect(screen.getByText('unsaved changes')).toBeInTheDocument()
-  })
+  }, SLOW)
 
   it('renames a field on blur and keeps the edit when typing the label afterwards', async () => {
     api()
@@ -54,5 +57,5 @@ describe('StudioEditorPage', () => {
 
     await waitFor(() => expect(screen.getAllByText('game_name').length).toBeGreaterThan(0))
     expect(screen.queryByText('new_field_1')).not.toBeInTheDocument()
-  })
+  }, SLOW)
 })

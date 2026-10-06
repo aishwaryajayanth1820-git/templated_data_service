@@ -11,7 +11,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.lnw</groupId>
+  <groupId>io.github.aishwaryajayanth1820</groupId>
   <artifactId>templated-data-service</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>Templated Data Service</name>

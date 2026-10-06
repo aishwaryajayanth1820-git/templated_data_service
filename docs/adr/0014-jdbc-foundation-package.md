@@ -14,7 +14,7 @@ would make `security` depend on the DDL engine, which is the wrong direction.
 
 ## Decision
 
-Add `com.lnw.tds.jdbc` as a foundation package with no dependencies on other TDS
+Add `io.github.aishwaryajayanth1820.tds.jdbc` as a foundation package with no dependencies on other TDS
 packages (enforced by `ArchitectureTest.jdbcIsFoundation`):
 
 - `DbVendor`: `SQLITE` or `POSTGRESQL`, with `nowSql()`.
