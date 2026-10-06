@@ -34,7 +34,7 @@ class PublishIT extends IntegrationTestBase {
 
     @Test
     void seedTemplatesAreAutoPublishedWithSampleRows() {
-        assertThat(catalog.snapshot().templates()).containsKeys("alerts", "alert_groups", "operator_settings");
+        assertThat(catalog.snapshot().templates()).containsKeys("alerts", "alert_groups", "vendor_items");
         assertThat(records.list("alerts", new LinkedMultiValueMap<>(), ADMIN).total()).isEqualTo(12);
     }
 

@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/tds-template.schema.json",
+  "grammar": "tds/v1",
+  "name": "vendor_items",
+  "label": "Vendor Items",
+  "description": "Items supplied by each vendor, with their rated wattage. Maintained by admins; read by everyone.",
+  "manageType": "MANAGE_VIEW",
+  "fields": [
+    { "name": "id", "type": "id", "ui": { "placement": "hidden" } },
+    {
+      "name": "vendor_name",
+      "label": "Vendor",
+      "type": "string",
+      "length": 255,
+      "required": true,
+      "constraints": { "notBlank": true },
+      "ui": { "placement": "column", "widget": "text", "width": 220 }
+    },
+    {
+      "name": "item_name",
+      "label": "Item",
+      "type": "string",
+      "length": 255,
+      "required": true,
+      "constraints": { "notBlank": true },
+      "ui": { "placement": "column", "widget": "text", "width": 280 }
+    },
+    {
+      "name": "wattage",
+      "label": "Wattage",
+      "type": "double",
+      "required": true,
+      "constraints": { "min": 0 },
+      "ui": { "placement": "column", "widget": "number", "width": 140, "format": "0.0 'W'", "help": "Rated power in watts" }
+    }
+  ],
+  "indexes": [
+    { "name": "ux_vendor_item", "fields": ["vendor_name", "item_name"], "unique": true }
+  ],
+  "access": {
+    "admin": ["read", "create", "update", "delete"],
+    "viewer": ["read"]
+  },
+  "view": {
+    "titleField": "item_name",
+    "defaultSort": [{ "field": "vendor_name", "dir": "asc" }, { "field": "item_name", "dir": "asc" }],
+    "pageSize": 25,
+    "search": ["vendor_name", "item_name"],
+    "filters": ["vendor_name"]
+  }
+}

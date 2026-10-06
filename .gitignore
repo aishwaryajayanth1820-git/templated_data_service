@@ -9,3 +9,7 @@ ui/node/
 .idea/
 *.iml
 .vscode/
+
+# Local working notes, not part of the published project
+/.claude/
+/project_requirement.md

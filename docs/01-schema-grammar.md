@@ -54,7 +54,7 @@ our own.
 
 Key style: grammar keys are `camelCase`; table and field **names** are `snake_case`
 (`^[a-z][a-z0-9_]{0,62}$`). PostgreSQL lower-cases unquoted identifiers and caps
-them at 63 chars, so `minSpinTime` from the requirement becomes `min_spin_time`.
+them at 63 chars, so a name like `itemName` is written `item_name`.
 
 Reserved: table prefix `tds_` (system tables); field names `created_at`,
 `created_by`, `updated_at`, `updated_by`, `row_version`, and anything starting with `$`.
@@ -166,7 +166,7 @@ strings, `trim(value) != ""`.
 
 ```jsonc
 "indexes": [
-  { "name": "ux_operator_jurisdiction", "fields": ["operator_name", "jurisdictional_name"], "unique": true },
+  { "name": "ux_vendor_item", "fields": ["vendor_name", "item_name"], "unique": true },
   { "name": "ix_alerts_date", "fields": ["alert_date"] }
 ]
 ```
@@ -231,11 +231,11 @@ a portable SQL `CHECK`, so a direct DB insert can't break them either.
   { "id": "some_contact", "kind": "atLeastOne", "fields": ["email", "phone"] },
 
   // arbitrary JsonLogic; optional `when` guard on any rule
-  { "id": "spin_range", "kind": "expr",
-    "when":   { "==": [{ "var": "jurisdictional_name" }, "UK"] },
-    "assert": { ">=": [{ "var": "min_spin_time" }, 2.5] },
-    "fields": ["min_spin_time"],
-    "message": "UK requires a minimum spin time of 2.5 s." }
+  { "id": "wattage_cap", "kind": "expr",
+    "when":   { "==": [{ "var": "vendor_name" }, "Voltix"] },
+    "assert": { "<=": [{ "var": "wattage" }, 500] },
+    "fields": ["wattage"],
+    "message": "Voltix items are limited to 500 W." }
 ]
 ```
 
@@ -389,13 +389,14 @@ SQLite can't `ALTER` constraints, so those migrations use the standard
 
 Full translations: [`templates/alert_groups.json`](../templates/alert_groups.json),
 [`templates/alerts.json`](../templates/alerts.json),
-[`templates/operator_settings.json`](../templates/operator_settings.json).
+[`templates/vendor_items.json`](../templates/vendor_items.json).
 
 ### Open questions
-1. `operator_name` is typed `datetime` in the requirement. We assumed a typo and
+1. `vendor_name` is typed `datetime` in the requirement. We assumed a typo and
    made it `string(255)`.
 2. The `alert_type` values aren't given. We assumed `CRITICAL | MAJOR | MINOR | INFO`.
 3. Who may run `create_ticket`? We assumed `admin` and `viewer`, since it only
    writes a text file.
-4. The `MANAGE_VIEW` example has no table name. We named it `operator_settings`,
-   with a unique key on `(operator_name, jurisdictional_name)`.
+4. The `MANAGE_VIEW` example has no table name. We named it `vendor_items`,
+   with a unique key on `(vendor_name, item_name)` and `wattage ≥ 0`
+   ([ADR-0019](adr/0019-vendor-items-example.md)).

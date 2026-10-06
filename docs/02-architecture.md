@@ -645,6 +645,6 @@ M1–M4 are backend-heavy and can be demonstrated with the REST API and
    which has a richer grid out of the box but is heavier and less themeable.
 4. **Offset paging** with a total count is fine for the expected table sizes
    (≤ ~1M rows). Keyset paging can come later.
-5. **Grammar assumptions** from 01 §12 (`operator_name` as a string,
-   `alert_type` values, `viewer` may run `create_ticket`, `operator_settings`) are
+5. **Grammar assumptions** from 01 §12 (`vendor_name` as a string,
+   `alert_type` values, `viewer` may run `create_ticket`, `vendor_items`) are
    treated as accepted.
