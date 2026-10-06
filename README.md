@@ -48,18 +48,18 @@ tools, which are far more mature than this project.
 
 ## Prerequisites
 
-- JDK 21 (`C:\InstalledSofts\jdk-21.0.11`), Maven 3.9+
+- JDK 21 and Maven 3.9+
 - Node 22+ only for UI development (the `-Pui` build downloads its own Node into `target/node`)
 
 Git Bash (no spaces around `=`). JDK 21 must also come first on `PATH` if another `java` is installed:
 
 ```bash
-export JAVA_HOME=/c/InstalledSofts/jdk-21.0.11
+export JAVA_HOME="/path/to/jdk-21"    # your JDK 21 install folder
 export PATH="$JAVA_HOME/bin:$PATH"
-java --version        # expect 21.0.11
+java --version        # expect 21.x
 ```
 
-PowerShell: `$env:JAVA_HOME = "C:\InstalledSofts\jdk-21.0.11"; $env:Path = "$env:JAVA_HOME\bin;$env:Path"`
+PowerShell: `$env:JAVA_HOME = "C:\path\to\jdk-21"; $env:Path = "$env:JAVA_HOME\bin;$env:Path"`
 
 ## Build
 

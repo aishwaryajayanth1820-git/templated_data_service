@@ -14,7 +14,7 @@ classes can exist for them.
 ## Decision
 
 - Spring Boot **4.1.x** (Spring Framework 7, Jackson 3), compiled with
-  `--release 21`, run on `C:\InstalledSofts\jdk-21.0.11`.
+  `--release 21`, run on JDK 21.
 - **Spring JDBC** (`JdbcClient`) for both the dynamic tables and the system
   tables. One access style everywhere; no JPA or Hibernate.
 - Maven build; versions come from the Spring Boot BOM wherever possible.
