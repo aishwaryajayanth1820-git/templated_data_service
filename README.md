@@ -109,7 +109,7 @@ cd ui && npm install && npm run dev                  # UI on :5173, proxies /api
 ## Layout
 
 ```
-src/main/java/com/lnw/tds   backend: grammar, ddl, catalog, data, access, script, meta, admin, security, web, jdbc, config
+src/main/java/io/github/aishwaryajayanth1820/tds   backend: grammar, ddl, catalog, data, access, script, meta, admin, security, web, jdbc, config
 src/main/resources          application*.yml, Flyway scripts per vendor
 ui/                         React + Mantine app: data pages, admin, Schema Studio
 schema/                     tds-template.schema.json (grammar meta-schema, shared by server and Studio)

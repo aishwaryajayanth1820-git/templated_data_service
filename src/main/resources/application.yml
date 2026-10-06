@@ -43,4 +43,4 @@ tds:
 
 logging:
   level:
-    com.lnw.tds: INFO
+    io.github.aishwaryajayanth1820.tds: INFO

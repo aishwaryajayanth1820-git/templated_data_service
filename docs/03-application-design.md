@@ -4,7 +4,7 @@ Status: **Accepted baseline** · Owner: Zypher / Aabel · 2026-10-03
 Implements: [02-architecture.md](02-architecture.md) · Decisions: [ADR log](adr/README.md)
 
 This document is the contract between design and code. Package and class names
-here are the ones in `src/main/java/com/lnw/tds`. Changes to a public signature
+here are the ones in `src/main/java/io/github/aishwaryajayanth1820/tds`. Changes to a public signature
 or a package boundary need a short update here, plus an ADR if they meet the
 criteria in [ADR-0001](adr/0001-record-architecture-decisions.md).
 
@@ -30,7 +30,7 @@ criteria in [ADR-0001](adr/0001-record-architecture-decisions.md).
 ## 2. Package map and dependency rules
 
 ```
-com.lnw.tds
+io.github.aishwaryajayanth1820.tds
 ├─ TdsApplication
 ├─ config      → (wires everything)
 ├─ jdbc        → DbVendor, DbVendorResolver, JdbcTime     (depends on: NOTHING in tds; ADR-0014)
@@ -47,7 +47,7 @@ com.lnw.tds
 ```
 
 Enforced by `ArchitectureTest` (ArchUnit): `grammar` must not import
-`org.springframework..` or `com.lnw.tds..` outside itself; `jdbc` must not import other `com.lnw.tds..` packages; there are no cycles
+`org.springframework..` or `io.github.aishwaryajayanth1820.tds..` outside itself; `jdbc` must not import other `io.github.aishwaryajayanth1820.tds..` packages; there are no cycles
 between packages; controllers live only in `web`, `security`, `data`, `meta`
 and `admin`.
 
