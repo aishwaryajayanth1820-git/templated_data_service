@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 660" width="1400" height="660" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="660" fill="#ffffff"/>
+  <text x="700" y="62" text-anchor="middle" font-size="34" font-weight="700" fill="#111827">One template → a table, an API and a UI</text>
+  <text x="700" y="98" text-anchor="middle" font-size="20" fill="#6b7280">Publish in the Schema Studio · no code change · no restart</text>
+
+  <!-- Template card -->
+  <rect x="60" y="140" width="470" height="460" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="60" y="140" width="470" height="52" rx="16" fill="#1e293b"/>
+  <rect x="60" y="176" width="470" height="16" fill="#1e293b"/>
+  <text x="84" y="173" font-size="18" font-weight="600" fill="#f8fafc">alerts.json  ·  tds/v1 template</text>
+  <g font-family="Cascadia Code, Consolas, Menlo, monospace" font-size="16.5" fill="#334155">
+    <text x="84" y="226">{ "name": "alerts",</text>
+    <text x="102.2" y="252">"manageType": "VIEW",</text>
+    <text x="102.2" y="278">"fields": [</text>
+    <text x="120.3" y="304">{ "name": "alert_type", "type": "enum",</text>
+    <text x="138.4" y="330">"values": ["CRITICAL","MAJOR",…],</text>
+    <text x="138.4" y="356">"ui": { "placement": "column" } },</text>
+    <text x="120.3" y="382">{ "name": "alert_group", "type": "ref",</text>
+    <text x="138.4" y="408">"ref": { "target": "alert_groups" } }</text>
+    <text x="102.2" y="434">],</text>
+    <text x="102.2" y="460">"rules":   [ { "kind": "requires", … } ],</text>
+    <text x="102.2" y="486">"actions": [ { "name": "create_ticket",</text>
+    <text x="229.2" y="512">"script": "alerts/…js" } ],</text>
+    <text x="102.2" y="538">"access":  { "viewer": ["read"] } }</text>
+  </g>
+  <text x="84" y="578" font-size="15" fill="#64748b">Schema · UI · roles · rules · actions in one document</text>
+
+  <!-- Engine -->
+  <line x1="540" y1="370" x2="628" y2="370" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="584" y="352" text-anchor="middle" font-size="15" font-weight="600" fill="#2563eb">publish</text>
+  <rect x="640" y="250" width="200" height="240" rx="20" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="740" y="320" text-anchor="middle" font-size="30" font-weight="800" fill="#1d4ed8">TDS</text>
+  <text x="740" y="352" text-anchor="middle" font-size="15" fill="#1e3a8a">validate</text>
+  <text x="740" y="376" text-anchor="middle" font-size="15" fill="#1e3a8a">plan migration</text>
+  <text x="740" y="400" text-anchor="middle" font-size="15" fill="#1e3a8a">apply in one transaction</text>
+  <text x="740" y="424" text-anchor="middle" font-size="15" fill="#1e3a8a">swap live catalog</text>
+  <text x="740" y="462" text-anchor="middle" font-size="13" fill="#64748b">Spring Boot · Java 21</text>
+
+  <!-- Outputs -->
+  <line x1="850" y1="320" x2="918" y2="232" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="850" y1="370" x2="918" y2="370" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="850" y1="420" x2="918" y2="508" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect x="930" y="160" width="410" height="140" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+    <text x="954" y="198" font-size="21" font-weight="700" fill="#065f46">Database table</text>
+    <text x="954" y="228" font-size="16" fill="#065f46">Types, NOT NULL, UNIQUE, FK, CHECK</text>
+    <text x="954" y="252" font-size="16" fill="#065f46">constraints and indexes · versioned</text>
+    <text x="954" y="276" font-size="14" fill="#047857" font-family="Cascadia Code, Consolas, monospace">SQLite now · PostgreSQL ready</text>
+  </g>
+  <g>
+    <rect x="930" y="300" width="410" height="140" rx="14" fill="#fff7ed" stroke="#f59e0b" stroke-width="2" transform="translate(0,10)"/>
+    <text x="954" y="348" font-size="21" font-weight="700" fill="#92400e">REST API</text>
+    <text x="954" y="378" font-size="16" fill="#92400e">CRUD, filter, search, sort, paging,</text>
+    <text x="954" y="402" font-size="16" fill="#92400e">optimistic locking, field-level access</text>
+    <text x="954" y="426" font-size="14" fill="#b45309" font-family="Cascadia Code, Consolas, monospace">/api/data/alerts?f.alert_type=…</text>
+  </g>
+  <g>
+    <rect x="930" y="460" width="410" height="140" rx="14" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="954" y="498" font-size="21" font-weight="700" fill="#5b21b6">React UI</text>
+    <text x="954" y="528" font-size="16" fill="#5b21b6">Grid with filters and detail rows,</text>
+    <text x="954" y="552" font-size="16" fill="#5b21b6">generated forms, action buttons</text>
+    <text x="954" y="576" font-size="14" fill="#6d28d9">per role: only what each user may see</text>
+  </g>
+</svg>
