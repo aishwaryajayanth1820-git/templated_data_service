@@ -17,7 +17,7 @@ Decisions and later changes: [ADR log](adr/README.md).
 | R5 | `VIEW` / `MANAGE_VIEW` / `DATA_SOURCE` semantics | Enforced in `/api/meta` (which UI to offer); REST CRUD exists for every type, gated only by role |
 | R6 | REST API for add / update / delete on every table; the UI uses only that API | `/api/data/{template}/**`; the React app has no other data path |
 | R7 | SQLite first, PostgreSQL-compatible, migrate later | `SqlDialect` abstraction, portable DDL (§6), Flyway per-vendor folders, and a planned copy tool (§13) |
-| R8 | Java 21, Spring Boot | Spring Boot **4.1.1** (Java 17–26), compiled with `--release 21` and run on `C:\InstalledSofts\jdk-21.0.11` |
+| R8 | Java 21, Spring Boot | Spring Boot **4.1.1** (Java 17–26), compiled with `--release 21` and run on any JDK 21 |
 
 **Non-goals for v1:** multiple service instances, multi-tenancy, SSO/LDAP, field-level audit history, composite primary keys.
 

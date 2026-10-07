@@ -30,7 +30,7 @@ Goal: an empty but production-shaped service you can log in to.
 
 | ID | Story | Acceptance criteria | Status |
 |---|---|---|---|
-| TDS-101 | Maven project on Spring Boot 4.1.1, Java 21 | `mvn verify` runs on `C:\InstalledSofts\jdk-21.0.11`; `--release 21`; `ArchitectureTest` in place | ☑ |
+| TDS-101 | Maven project on Spring Boot 4.1.1, Java 21 | `mvn verify` runs on JDK 21; `--release 21`; `ArchitectureTest` in place | ☑ |
 | TDS-102 | SQLite datasource | The DB file is created under `./data/`; `foreign_keys=ON`, `journal_mode=WAL` and `busy_timeout` are verified by a test; the PostgreSQL profile is present but not used yet | ☑ |
 | TDS-103 | System tables via Flyway | `V1__system.sql` for sqlite **and** postgresql: `tds_user`, `tds_role`, `tds_user_role`, `tds_template`, `tds_template_version`, `tds_action_log`; built-in roles are seeded | ☑ |
 | TDS-104 | Error model | `ApiException` family + `ApiExceptionHandler` → `ProblemDetail` with `code`; unit-tested | ☑ |
