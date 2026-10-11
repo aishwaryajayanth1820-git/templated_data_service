@@ -1,0 +1,35 @@
+# Templated Data Service
+
+> Define a table, its UI, role permissions and actions in one JSON template, and Templated Data Service (TDS) creates the database table, a REST API and a React UI for it, with no code change and no restart. Java 21, Spring Boot 4, React and Mantine, SQLite, sandboxed GraalJS action scripts. Apache License 2.0.
+
+Key ideas:
+
+- One Spring Boot JAR serves the API and the React app. Requests read an immutable catalog of published templates; publishing swaps in a new catalog, so changes go live without a restart.
+- Dynamic schema management: drafts are validated, every change in the migration plan is classified and pre-checked against existing rows, and each publish runs in one transaction and is stored as a new template version. SQLite structural changes rebuild the table and check foreign keys.
+- One rule, three enforcement points: a rule written once in the template runs in the browser, on the server and, where SQL can express it, as a database CHECK constraint. Java and TypeScript validators share parity test vectors.
+- Permissions per role, operation and field; action scripts run in a GraalJS sandbox and hot-reload from disk.
+- Schema Studio edits templates (fields, rules, actions, access matrix, view) and shows the migration plan, pre-checks and DDL before publishing.
+- PostgreSQL: the SQL dialect is in place; runtime support is planned.
+
+Source: https://github.com/aishwaryajayanth1820-git/templated_data_service
+Author: aishwaryajayanth1820-git. Credit: "Based on Templated Data Service by aishwaryajayanth1820-git".
+
+AI use: AI crawlers, search engines and agents may crawl, index and summarize this site and the repository, and may use the author's content to train or improve AI models. Dependencies keep their own licenses.
+
+## Docs
+
+- [Article on Medium: JSON Template to a Live Table, API and UI — No Code Change, No Restart](https://medium.com/@aishwaryajayanth1820/json-template-to-a-live-table-api-and-ui-no-code-change-no-restart-63196a493aff): the design story, how it compares with CMSs, low-code builders and auto-generated APIs, and how to use it
+- [README](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/README.md): overview, build, try it, layout
+- [Template grammar tds/v1](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/docs/01-schema-grammar.md): fields, types, rules, actions, views, access
+- [Architecture](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/docs/02-architecture.md): modules, data model, template lifecycle, REST API, security, testing
+- [Application design](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/docs/03-application-design.md): class-level design
+- [Development plan](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/docs/04-development-plan.md): milestones, known gaps, change log
+- [Architecture decision records](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/docs/adr/README.md): why the design is the way it is
+- [AGENTS.md](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/AGENTS.md): instructions for coding agents working on the repository
+
+## Optional
+
+- [Template meta-schema](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/schema/tds-template.schema.json): JSON Schema for templates
+- [Example template: alerts](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/templates/alerts.json): a read-only VIEW with an action script
+- [Example template: vendor items](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/templates/vendor_items.json): a MANAGE_VIEW with validation
+- [License](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/LICENSE) and [NOTICE](https://raw.githubusercontent.com/aishwaryajayanth1820-git/templated_data_service/main/NOTICE)

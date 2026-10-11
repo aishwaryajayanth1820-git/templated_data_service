@@ -1,0 +1,8 @@
+[
+  {"id":1,"vendor_name":"Brightline","item_name":"LED Tube T8 1200mm","wattage":18},
+  {"id":2,"vendor_name":"Brightline","item_name":"LED High Bay 150","wattage":150},
+  {"id":3,"vendor_name":"Northwind Power","item_name":"Heat Pump Controller","wattage":12.5},
+  {"id":4,"vendor_name":"Northwind Power","item_name":"Industrial Fan 24in","wattage":220},
+  {"id":5,"vendor_name":"Voltix","item_name":"Emergency Exit Sign","wattage":3.5},
+  {"id":6,"vendor_name":"Voltix","item_name":"LED Panel 600x600","wattage":36}
+]

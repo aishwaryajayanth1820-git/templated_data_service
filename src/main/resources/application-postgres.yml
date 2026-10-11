@@ -1,0 +1,8 @@
+# Activate with --spring.profiles.active=postgres (M7, ADR-0004)
+spring:
+  datasource:
+    url: ${TDS_DB_URL:jdbc:postgresql://localhost:5432/tds}
+    username: ${TDS_DB_USER:tds}
+    password: ${TDS_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10

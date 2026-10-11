@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this service, build on it or write about it, please credit it as below."
+title: "Templated Data Service"
+type: software
+authors:
+  - name: "aishwaryajayanth1820-git"
+repository-code: "https://github.com/aishwaryajayanth1820-git/templated_data_service"
+url: "https://aishwaryajayanth1820-git.github.io/templated_data_service/"
+license: Apache-2.0
+date-released: "2026-10-05"
+abstract: >-
+  Define a table, its UI, role permissions and actions in one JSON template, and
+  the service creates the database table, a REST API and a React UI for it, with
+  no code change and no restart. Spring Boot 4, Java 21, React and Mantine,
+  SQLite, sandboxed GraalJS action scripts.
+keywords:
+  - template-driven
+  - low-code
+  - dynamic schema
+  - schema migration
+  - REST API
+  - Spring Boot
+  - React

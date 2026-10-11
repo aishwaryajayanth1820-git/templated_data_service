@@ -1,0 +1,27 @@
+{
+  "$schema": "../schema/tds-template.schema.json",
+  "grammar": "tds/v1",
+  "name": "alert_groups",
+  "label": "Alert Groups",
+  "description": "Lookup list of alert groups. Loaded directly into the table; referenced by alerts.",
+  "manageType": "DATA_SOURCE",
+  "fields": [
+    { "name": "id", "type": "id" },
+    {
+      "name": "alert_group_name",
+      "label": "Group name",
+      "type": "string",
+      "length": 255,
+      "required": true,
+      "unique": true,
+      "constraints": { "notBlank": true }
+    }
+  ],
+  "access": {
+    "admin": ["read", "create", "update", "delete"]
+  },
+  "view": {
+    "titleField": "alert_group_name",
+    "defaultSort": [{ "field": "alert_group_name", "dir": "asc" }]
+  }
+}

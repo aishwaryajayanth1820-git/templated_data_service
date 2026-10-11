@@ -1,0 +1,15 @@
+target/
+/data/                 # runtime SQLite database and action output (root only, not source folders named data)
+*.db
+*.db-wal
+*.db-shm
+ui/node_modules/
+ui/dist/
+ui/node/
+.idea/
+*.iml
+.vscode/
+
+# Local working notes, not part of the published project
+/.claude/
+/project_requirement.md
